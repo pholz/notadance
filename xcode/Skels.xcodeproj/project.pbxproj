@@ -28,6 +28,10 @@
 		66325E7A12FCEF3500E95797 /* VOpenNIDeviceManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3212FCEF3500E95797 /* VOpenNIDeviceManager.cpp */; };
 		66325E7B12FCEF3500E95797 /* VOpenNIUser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */; };
 		66325E8E12FDF81700E95797 /* SkelsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E8D12FDF81700E95797 /* SkelsApp.cpp */; };
+		66674D9F13048564004CFE8F /* OscBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9B13048564004CFE8F /* OscBundle.cpp */; };
+		66674DA013048564004CFE8F /* OscListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9C13048564004CFE8F /* OscListener.cpp */; };
+		66674DA113048564004CFE8F /* OscMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9D13048564004CFE8F /* OscMessage.cpp */; };
+		66674DA213048564004CFE8F /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9E13048564004CFE8F /* OscSender.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -117,6 +121,13 @@
 		66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VOpenNIUser.cpp; sourceTree = "<group>"; };
 		66325E8C12FDF81200E95797 /* Skels_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skels_Prefix.pch; sourceTree = "<group>"; };
 		66325E8D12FDF81700E95797 /* SkelsApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkelsApp.cpp; path = ../src/SkelsApp.cpp; sourceTree = SOURCE_ROOT; };
+		66674D9B13048564004CFE8F /* OscBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscBundle.cpp; path = ../../../../osc/src/OscBundle.cpp; sourceTree = SOURCE_ROOT; };
+		66674D9C13048564004CFE8F /* OscListener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscListener.cpp; path = ../../../../osc/src/OscListener.cpp; sourceTree = SOURCE_ROOT; };
+		66674D9D13048564004CFE8F /* OscMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscMessage.cpp; path = ../../../../osc/src/OscMessage.cpp; sourceTree = SOURCE_ROOT; };
+		66674D9E13048564004CFE8F /* OscSender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscSender.cpp; path = ../../../../osc/src/OscSender.cpp; sourceTree = SOURCE_ROOT; };
+		66674DEA1304AD73004CFE8F /* KinectImages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KinectImages.h; path = ../include/KinectImages.h; sourceTree = SOURCE_ROOT; };
+		66674DF11304ADCD004CFE8F /* Obj3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Obj3D.h; path = ../include/Obj3D.h; sourceTree = SOURCE_ROOT; };
+		66674DF21304ADCD004CFE8F /* OscManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OscManager.h; path = ../include/OscManager.h; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Skels.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Skels.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -191,6 +202,7 @@
 		29B97314FDCFA39411CA2CEA /* BlockOpenNISkeleton */ = {
 			isa = PBXGroup;
 			children = (
+				66674D9913048559004CFE8F /* OSC */,
 				66325D7A12FCEF3500E95797 /* BlockOpenNI */,
 				29B97315FDCFA39411CA2CEA /* Headers */,
 				080E96DDFE201D6D7F000001 /* Source */,
@@ -204,7 +216,10 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				66674DF11304ADCD004CFE8F /* Obj3D.h */,
+				66674DF21304ADCD004CFE8F /* OscManager.h */,
 				66325E8C12FDF81200E95797 /* Skels_Prefix.pch */,
+				66674DEA1304AD73004CFE8F /* KinectImages.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -384,6 +399,17 @@
 			path = src;
 			sourceTree = "<group>";
 		};
+		66674D9913048559004CFE8F /* OSC */ = {
+			isa = PBXGroup;
+			children = (
+				66674D9B13048564004CFE8F /* OscBundle.cpp */,
+				66674D9C13048564004CFE8F /* OscListener.cpp */,
+				66674D9D13048564004CFE8F /* OscMessage.cpp */,
+				66674D9E13048564004CFE8F /* OscSender.cpp */,
+			);
+			name = OSC;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -446,6 +472,10 @@
 				66325E7A12FCEF3500E95797 /* VOpenNIDeviceManager.cpp in Sources */,
 				66325E7B12FCEF3500E95797 /* VOpenNIUser.cpp in Sources */,
 				66325E8E12FDF81700E95797 /* SkelsApp.cpp in Sources */,
+				66674D9F13048564004CFE8F /* OscBundle.cpp in Sources */,
+				66674DA013048564004CFE8F /* OscListener.cpp in Sources */,
+				66674DA113048564004CFE8F /* OscMessage.cpp in Sources */,
+				66674DA213048564004CFE8F /* OscSender.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,8 +502,8 @@
 					"\"$(SRCROOT)/../../../lib/msw\"",
 				);
 				OTHER_LDFLAGS = (
+					"\"$(CINDER_PATH)/blocks/osc/lib/macosx/osc.a\"",
 					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
-					"-lcurl",
 				);
 				PRODUCT_NAME = Skels;
 				WRAPPER_EXTENSION = app;
@@ -525,7 +555,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/blocks/osc/include\" \"$(CINDER_PATH)/include\" ../include";
 			};
 			name = Debug;
 		};

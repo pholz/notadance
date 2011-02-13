@@ -14,127 +14,26 @@
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/params/Params.h"
+#include "cinder/Camera.h"
 #include "VOpenNIHeaders.h"
 #include <sstream>
+#include "OscManager.h"
+#include "Obj3D.h"
+#include "KinectImages.h"
+#define OSC_SEND_HOST "localhost"
+#define OSC_SEND_PORT 9000
+#define OSC_RECEIVE_PORT 3000
 
 using namespace ci;
 using namespace ci::app;
 using namespace std;
 
-class Obj3D
-{
-public:
-	Obj3D() {
-		pos = Vec3f(.0f, .0f, .0f);
-		vel = Vec3f(.0f, .0f, .0f);
-		acc = Vec3f(.0f, .0f, .0f);
-	}
-	
-	Obj3D(Vec3f _pos) {
-		pos = _pos;
-		vel = Vec3f(.0f, .0f, .0f);
-		acc = Vec3f(.0f, .0f, .0f);
-	}
-	
-	Obj3D(Vec3f _pos, Vec3f _vel) {
-		pos = _pos;
-		vel = _vel;
-		acc = Vec3f(.0f, .0f, .0f);
-	}
-	
-	Obj3D(Vec3f _pos, Vec3f _vel, Vec3f _acc) {
-		pos = _pos;
-		vel = _vel;
-		acc = _acc;
-	}
-	
-	void update(float dt)
-	{
-		pos += vel * dt;
-		vel += acc * dt;
-	}
-	
-	
-	Vec3f pos, vel, acc;
-	
-};
-
-
-class ImageSourceKinectColor : public ImageSource 
-{
-public:
-	ImageSourceKinectColor( uint8_t *buffer, int width, int height )
-		: ImageSource(), mData( buffer ), _width(width), _height(height)
-	{
-		setSize( _width, _height );
-		setColorModel( ImageIo::CM_RGB );
-		setChannelOrder( ImageIo::RGB );
-		setDataType( ImageIo::UINT8 );
-	}
-
-	~ImageSourceKinectColor()
-	{
-		// mData is actually a ref. It's released from the device. 
-		/*if( mData ) {
-			delete[] mData;
-			mData = NULL;
-		}*/
-	}
-
-	virtual void load( ImageTargetRef target )
-	{
-		ImageSource::RowFunc func = setupRowFunc( target );
-
-		for( uint32_t row	 = 0; row < _height; ++row )
-			((*this).*func)( target, row, mData + row * _width * 3 );
-	}
-
-protected:
-	uint32_t					_width, _height;
-	uint8_t						*mData;
-};
-
-
-class ImageSourceKinectDepth : public ImageSource 
-{
-public:
-	ImageSourceKinectDepth( uint16_t *buffer, int width, int height )
-		: ImageSource(), mData( buffer ), _width(width), _height(height)
-	{
-		setSize( _width, _height );
-		setColorModel( ImageIo::CM_GRAY );
-		setChannelOrder( ImageIo::Y );
-		setDataType( ImageIo::UINT16 );
-	}
-
-	~ImageSourceKinectDepth()
-	{
-		// mData is actually a ref. It's released from the device. 
-		/*if( mData ) {
-			delete[] mData;
-			mData = NULL;
-		}*/
-	}
-
-	virtual void load( ImageTargetRef target )
-	{
-		ImageSource::RowFunc func = setupRowFunc( target );
-
-		for( uint32_t row = 0; row < _height; ++row )
-			((*this).*func)( target, row, mData + row * _width );
-	}
-
-protected:
-	uint32_t					_width, _height;
-	uint16_t					*mData;
-};
-
 
 class SkelsApp : public AppBasic 
 {
 public:
-	static const int WIDTH = 1280;
-	static const int HEIGHT = 720;
+	static const int WIDTH = 1024;
+	static const int HEIGHT = 768;
 
 	static const int KINECT_COLOR_WIDTH = 640;	//1280;
 	static const int KINECT_COLOR_HEIGHT = 480;	//1024;
@@ -150,8 +49,8 @@ public:
 	void draw();
 	void keyDown( KeyEvent event );
 	void renderBackground();
+	void shutdown();
 	
-
 	ImageSourceRef getColorImage()
 	{
 		// register a reference to the active buffer
@@ -194,10 +93,20 @@ public:	// Members
 	float mParam_scaleX;
 	float mParam_scaleY;
 	float mParam_scaleZ;
+	float mParam_zoom;
 	
 	Font helvetica;
 	
-	Obj3D center, leftHand, rightHand;
+	Obj3D center, leftHand, rightHand, lastCenter;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter;
+	
+	CameraPersp cam;
+	
+	float lastUpdate;
+	
+	vector<Vec3f> joints;
+	
+	OscManager* oscManager;
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
@@ -207,6 +116,10 @@ void SkelsApp::prepareSettings(Settings* settings)
 
 void SkelsApp::setup()
 {
+	gl::setMatricesWindow( 640, 480 );
+	
+	// init OpenNI stuff
+	// ---------------------------------------------------------------------------
 	_manager = V::OpenNIDeviceManager::InstancePtr();
 	_device0 = _manager->createDevice( "data/configIR.xml", true );
 	if( !_device0 ) 
@@ -217,22 +130,42 @@ void SkelsApp::setup()
 	_device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
 	_manager->start();
 
-
 	gl::Texture::Format format;
 	gl::Texture::Format depthFormat;
 	mColorTex = gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
 	mDepthTex = gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
 	mOneUserTex = gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
 	
+	
+	// init debug params
+	// ---------------------------------------------------------------------------
 	mParam_scaleX = .5f;
-	mParam_scaleY = .5f;
+	mParam_scaleY = -.5f;
 	mParam_scaleZ = -1.0f;
+	mParam_zoom = 1000.0f;
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex", &mParam_scaleX, "min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
 	mParams.addParam( "scaley", &mParam_scaleY, "min=-10.0 max=10.0 step=.01 keyIncr=Y keyDecr=y");
 	mParams.addParam( "scalez", &mParam_scaleZ, "min=-10.0 max=10.0 step=.01 keyIncr=Z keyDecr=z" );
+	mParams.addParam( "zoom", &mParam_zoom, "min=-1000.0 max=10000.0 step=1.0 keyIncr=O keyDecr=o" );
 	
 	helvetica = Font("Helvetica", 32) ;
+	
+	// init camera
+	// ---------------------------------------------------------------------------
+	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
+	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
+	
+	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, .0f);
+	
+	// init timing
+	// ---------------------------------------------------------------------------
+	lastUpdate = getElapsedSeconds();
+	
+	// init osc manager
+	// ---------------------------------------------------------------------------
+	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT);
+	oscManager->send("/skels/start", 1.0f);
 }
 
 void SkelsApp::mouseDown( MouseEvent event )
@@ -241,12 +174,88 @@ void SkelsApp::mouseDown( MouseEvent event )
 
 void SkelsApp::update()
 {	
+	// timing
+	// ---------------------------------------------------------------------------
+	float now = getElapsedSeconds();
+	float dt = now - lastUpdate;
+	lastUpdate = now;
+	
+	
+	gl::setMatricesWindow( 640, 480 );
+	
 	// Update textures
+	// ---------------------------------------------------------------------------
 	mColorTex.update( getColorImage() );
 	mDepthTex.update( getDepthImage24() );	// Histogram
 
 	// Uses manager to handle users.
 	if( _manager->hasUsers() && _manager->hasUser(1) ) mOneUserTex.update( getUserColorImage(1) );
+	
+	
+	// if we're tracking, do position updates, and apply hand movements
+	// ---------------------------------------------------------------------------
+	if( _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
+	{
+		center.update(dt);
+
+		xn::DepthGenerator* depth = _device0->getDepthGenerator();
+		if( depth )
+		{
+			V::UserBoneList boneList = _manager->getUser(1)->getBoneList();
+			
+			if(boneList.size() != joints.size()) joints = vector<Vec3f>(boneList.size());
+			
+			V::UserBoneList::iterator boneIt;
+			int idx = 0;
+			for(boneIt = boneList.begin(); boneIt != boneList.end(); boneIt++, idx++)
+			{
+				
+				V::OpenNIBone &bone = *(*boneIt);
+
+				XnPoint3D point;
+				XnPoint3D realJointPos;
+				realJointPos.X = bone.position[0];
+				realJointPos.Y = bone.position[1];
+				realJointPos.Z = bone.position[2];
+				depth->ConvertRealWorldToProjective( 1, &realJointPos, &point );
+				
+				
+				//console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
+
+				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, point.Z * mParam_scaleZ/10.0f);
+				
+				if(idx == 4) massCenter = pos - windowCenter;
+				if(idx == 10) diffLeftHand = pos - windowCenter - massCenter;
+				if(idx == 15) diffRightHand = pos -windowCenter - massCenter;
+				
+				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, 1, .0f);
+			}
+			
+		}
+	}
+	
+	
+	//console() << "massCenter " << massCenter.x << "/" << massCenter.y << "/" << massCenter.z << endl;
+//	console() << "left " << diffLeftHand.x << "/" << diffLeftHand.y << "/" << diffLeftHand.z << endl;
+//	console() << "right " << diffRightHand.x << "/" << diffRightHand.y << "/" << diffRightHand.z << endl;
+//	console() << "c " << center.pos.x << "/" << center.pos.y << "/" << center.pos.z << endl;
+	
+	// calc new velocity based on distances from hand to body center
+	// ---------------------------------------------------------------------------
+	float clmp = 100.0f;
+	diffLeftHand.x = math<float>::clamp(diffLeftHand.x, -clmp, clmp);
+	diffLeftHand.y = math<float>::clamp(diffLeftHand.y, -clmp, clmp);
+	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
+	diffRightHand.y = math<float>::clamp(diffRightHand.y, -clmp, clmp);
+	center.vel = (diffLeftHand + diffRightHand) * Vec3f(2.5f, 2.5f, .0f);
+	if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
+	
+	
+	// send OSC updates to Max
+	// ---------------------------------------------------------------------------
+	
+	oscManager->send("/skels/center/x", center.pos.x);
+	oscManager->send("/skels/center/y", center.pos.y);
 }
 
 void SkelsApp::renderBackground()
@@ -259,116 +268,79 @@ void SkelsApp::renderBackground()
 	for(int i = 0; i < 100; i++)
 		for(int j = 0; j < 100; j++)
 		{
-			//if(centroid->distance(Vec2f(i*100-5000, j*100-5000)) > getWindowWidth() * 2) continue;
+			if(center.pos.distance(Vec3f(i*1000-50000, j*1000-50000, .0f)) > getWindowWidth() * 2) continue;
 			
 			glPushMatrix();
-			gl::translate(Vec3f(i * 100 - 5000, j * 100 - 5000, -300.0f));
-			gl::color(ColorA(1.0f, .5f, 1.0f, .4f));
+			gl::translate(Vec3f(i * 1000 - 50000, j * 1000 - 50000, -300.0f));
+			gl::color(ColorA(1.0f, .5f, 1.0f, .7f));
 			glLineWidth(1.0f);
 			glLineStipple(3, 0xAAAA);
 			glEnable(GL_LINE_STIPPLE);
-			gl::drawLine(Vec2f(-52.0f, 0.0f), Vec2f(52.0f, 0.0f));
-			gl::drawLine(Vec2f(.0f, -52.0f), Vec2f(0.0f, 52.0f));
+			gl::drawLine(Vec2f(-520.0f, 0.0f), Vec2f(520.0f, 0.0f));
+			gl::drawLine(Vec2f(.0f, -520.0f), Vec2f(0.0f, 520.0f));
 			glDisable(GL_LINE_STIPPLE);
 			glPopMatrix();
 		}
 	
 	for(int j = 0; j < 50; j++)
 	{
-		//if(centroid->distance(Vec2f(j*200-5000, .0f)) > getWindowWidth() * 5) continue;
+		if(center.pos.distance(Vec3f(j*2000-50000, .0f, .0f)) > getWindowWidth() * 5) continue;
 		
 		glPushMatrix();
-		gl::translate(Vec3f(j * 200 - 5000, .0f, -2000.0f));
-		gl::color(ColorA(.7f, .2f, .7f, .2f));
-		gl::drawLine(Vec2f(.0f, -4500.0f), Vec2f(0.0f, 4500.0f));
+		gl::translate(Vec3f(j * 2000 - 50000, .0f, -2000.0f));
+		gl::color(ColorA(.7f, .2f, .7f, .4f));
+		gl::drawLine(Vec2f(.0f, -45000.0f), Vec2f(0.0f, 45000.0f));
 		glPopMatrix();
 	}
 	
-	
-	//glPushMatrix();
-	//	gl::translate(Vec3f(.0f, .0f, -50.0f));
-	//	partgen->draw();
-	//	glPopMatrix();
-	//	
-	// ---------------------------------------------------------------------------
 }
 
 void SkelsApp::draw()
 {
-	// clear out the window with black
 	gl::clear( Color( 0, 0, 0 ), true ); 
+	gl::enableAlphaBlending( false );
 	
-	gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 10000.0f);
-
-//	gl::color(Color(.0f, .0f, 1.0f));
-	//gl::drawSphere(Vec3f(mParam_scaleX, mParam_scaleY, mParam_scaleZ), 50.0f, 32);
+	// center on avatar's chest 'joint'
+	gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
+	cam.lookAt(Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, mParam_zoom), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, .0f));
+	gl::setMatrices(cam);
 	
+	gl::color(Color(1.0f, 1.0f, .0f));
+	gl::drawSphere(Vec3f(center.pos.x, center.pos.y, .0f), 30.0f, 32);
 	
+	renderBackground();
 	
-	
-
-
-	if( _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
+	// draw individual joints
+	// ---------------------------------------------------------------------------
+	vector<Vec3f>::iterator it;
+	int idx = 0;
+	for(it = joints.begin(); it != joints.end(); it++, idx++)
 	{
-		// Render skeleton if available
-		//_manager->renderJoints( 3 );
-
-		// Get list of available bones/joints
-		// Do whatever with it
-		
-		xn::DepthGenerator* depth = _device0->getDepthGenerator();
-		if( depth )
-		{
-			V::UserBoneList boneList = _manager->getUser(1)->getBoneList();
-			
-			V::UserBoneList::iterator boneIt;
-			int idx = 0;
-			for(boneIt = boneList.begin(); boneIt != boneList.end(); boneIt++, idx++)
-			{
-				V::OpenNIBone &bone = *(*boneIt);
-				gl::color(Color(1.0f, .0f, .0f));
-				
-				XnPoint3D point;
-				XnPoint3D realJointPos;
-				realJointPos.X = bone.position[0];
-				realJointPos.Y = bone.position[1];
-				realJointPos.Z = bone.position[2];
-				depth->ConvertRealWorldToProjective( 1, &realJointPos, &point );
-				
-			//	stringstream ss;
-			//	ss << idx;
-				
-				
-				
-				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, point.Z * mParam_scaleZ/10.0f);
-				
-				if(idx == 10) leftHand = pos;
-				if(idx == 15) rightHand = pos;
-				if(idx == 4) center = pos;
-				
-			//	console() << point.X << "/" << point.Y << "/" << point.Z << endl;
-				gl::drawSphere(pos, 10.0f, 32);
-				//gl::drawString( ss.str(), Vec2f(pos.x, pos.y), ColorA( 1, 1, 1, 1 ), helvetica);
-			}
-			
-		}
+		gl::color(Color(1.0f, .0f, .0f));
+		if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
+		gl::drawSphere(*it, 7.0f, 32);
 	}
+
 	
+	// draw debug info: depth and colour tex
+	// ---------------------------------------------------------------------------
+
 	gl::setMatricesWindow( WIDTH, HEIGHT );
-	//
+
 	float sx = 320/2;
 	float sy = 240/2;
 	float xoff = 10;
 	float yoff = 10;
+	
 	glEnable( GL_TEXTURE_2D );
-	//	gl::color( cinder::ColorA(1, 1, 1, 1) );
-	//	if( _manager->hasUsers() && _manager->hasUser(1) ) gl::draw( mOneUserTex, Rectf( 0, 0, 640, 480) );
+	gl::color( cinder::ColorA(1, 1, 1, 1) );
 	gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
 	gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
-	
 	glDisable( GL_TEXTURE_2D );
 	
-	// Draw the interface
+	
+	// debug params
+	// ---------------------------------------------------------------------------
 	params::InterfaceGl::draw();
 }
 
@@ -382,6 +354,14 @@ void SkelsApp::keyDown( KeyEvent event )
 		this->quit();
 		this->shutdown();
 	}
+}
+
+void SkelsApp::shutdown()
+{
+	oscManager->send("/skels/stop", 1.0f);
+	_manager->destroyAll();
+	delete oscManager;
+//	delete _manager; 
 }
 
 CINDER_APP_BASIC( SkelsApp, RendererGl )
