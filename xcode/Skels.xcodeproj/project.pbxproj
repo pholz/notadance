@@ -32,6 +32,8 @@
 		66674DA013048564004CFE8F /* OscListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9C13048564004CFE8F /* OscListener.cpp */; };
 		66674DA113048564004CFE8F /* OscMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9D13048564004CFE8F /* OscMessage.cpp */; };
 		66674DA213048564004CFE8F /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9E13048564004CFE8F /* OscSender.cpp */; };
+		66E3B54D13076045003958D5 /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B54C13076045003958D5 /* World.cpp */; };
+		66E3B59813077473003958D5 /* Obj3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B59713077473003958D5 /* Obj3D.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -128,6 +130,11 @@
 		66674DEA1304AD73004CFE8F /* KinectImages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = KinectImages.h; path = ../include/KinectImages.h; sourceTree = SOURCE_ROOT; };
 		66674DF11304ADCD004CFE8F /* Obj3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Obj3D.h; path = ../include/Obj3D.h; sourceTree = SOURCE_ROOT; };
 		66674DF21304ADCD004CFE8F /* OscManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OscManager.h; path = ../include/OscManager.h; sourceTree = SOURCE_ROOT; };
+		66E3B54B1307603C003958D5 /* World.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = World.h; path = ../include/World.h; sourceTree = SOURCE_ROOT; };
+		66E3B54C13076045003958D5 /* World.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = World.cpp; path = ../src/World.cpp; sourceTree = SOURCE_ROOT; };
+		66E3B5521307645A003958D5 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		66E3B55413076863003958D5 /* Player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../include/Player.h; sourceTree = SOURCE_ROOT; };
+		66E3B59713077473003958D5 /* Obj3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Obj3D.cpp; path = ../src/Obj3D.cpp; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Skels.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Skels.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -159,7 +166,9 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				66E3B54C13076045003958D5 /* World.cpp */,
 				66325E8D12FDF81700E95797 /* SkelsApp.cpp */,
+				66E3B59713077473003958D5 /* Obj3D.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -216,10 +225,13 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				66E3B54B1307603C003958D5 /* World.h */,
 				66674DF11304ADCD004CFE8F /* Obj3D.h */,
 				66674DF21304ADCD004CFE8F /* OscManager.h */,
 				66325E8C12FDF81200E95797 /* Skels_Prefix.pch */,
 				66674DEA1304AD73004CFE8F /* KinectImages.h */,
+				66E3B5521307645A003958D5 /* common.h */,
+				66E3B55413076863003958D5 /* Player.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -476,6 +488,8 @@
 				66674DA013048564004CFE8F /* OscListener.cpp in Sources */,
 				66674DA113048564004CFE8F /* OscMessage.cpp in Sources */,
 				66674DA213048564004CFE8F /* OscSender.cpp in Sources */,
+				66E3B54D13076045003958D5 /* World.cpp in Sources */,
+				66E3B59813077473003958D5 /* Obj3D.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

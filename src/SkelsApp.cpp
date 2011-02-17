@@ -18,7 +18,9 @@
 #include "VOpenNIHeaders.h"
 #include <sstream>
 #include "OscManager.h"
-#include "Obj3D.h"
+//#include "Obj3D.h"
+//#include "common.h"
+#include "World.h"
 #include "KinectImages.h"
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
@@ -98,7 +100,8 @@ public:	// Members
 	Font helvetica;
 	
 	Obj3D center, leftHand, rightHand, lastCenter;
-	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder;
+	float lx, ly, lz, rot;
 	
 	CameraPersp cam;
 	
@@ -107,6 +110,9 @@ public:	// Members
 	vector<Vec3f> joints;
 	
 	OscManager* oscManager;
+	
+	World world;
+	GameState gameState;
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
@@ -148,6 +154,10 @@ void SkelsApp::setup()
 	mParams.addParam( "scaley", &mParam_scaleY, "min=-10.0 max=10.0 step=.01 keyIncr=Y keyDecr=y");
 	mParams.addParam( "scalez", &mParam_scaleZ, "min=-10.0 max=10.0 step=.01 keyIncr=Z keyDecr=z" );
 	mParams.addParam( "zoom", &mParam_zoom, "min=-1000.0 max=10000.0 step=1.0 keyIncr=O keyDecr=o" );
+	mParams.addParam( "center.pos.x", &center.pos.x, "" );
+	mParams.addParam( "center.pos.y", &center.pos.y, "" );
+	mParams.addParam( "center.pos.z", &center.pos.z, "" );
+	mParams.addParam( "rot", &rot, "" );
 	
 	helvetica = Font("Helvetica", 32) ;
 	
@@ -166,10 +176,23 @@ void SkelsApp::setup()
 	// ---------------------------------------------------------------------------
 	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT);
 	oscManager->send("/skels/start", 1.0f);
+	
+	
+	// world
+	// ---------------------------------------------------------------------------
+	
+	gameState.player = &center;
+
+	ObjPtr o(new Obj3D(Vec3f(1000.0f, 1000.0f, .0f)));
+	world.addObject(o);
+	
+	o.reset(new Obj3D(Vec3f(-1000.0f, -1000.0f, .0f)));
+	world.addObject(o);
 }
 
 void SkelsApp::mouseDown( MouseEvent event )
 {
+	center.pos = Vec3f();
 }
 
 void SkelsApp::update()
@@ -220,13 +243,39 @@ void SkelsApp::update()
 				depth->ConvertRealWorldToProjective( 1, &realJointPos, &point );
 				
 				
-				//console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
+				console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
 
-				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, point.Z * mParam_scaleZ/10.0f);
+				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, point.Z * mParam_scaleZ/10.0f - 1000.0f);
 				
-				if(idx == 4) massCenter = pos - windowCenter;
-				if(idx == 10) diffLeftHand = pos - windowCenter - massCenter;
-				if(idx == 15) diffRightHand = pos -windowCenter - massCenter;
+				// 11, 5 shoulders
+				// 4 center
+				// 10, 15 hands
+				if(idx == 4) 
+				{
+					massCenter = pos - windowCenter;
+					
+				}
+				if(idx == 10) 
+				{
+					diffLeftHand = pos - windowCenter - massCenter;
+					
+				}
+				if(idx == 15)
+				{
+					diffRightHand = pos -windowCenter - massCenter;
+					lx = pos.x;
+					ly = pos.y;
+					lz = pos.z;
+				}
+				if(idx == 5)
+				{
+					leftShoulder = pos;
+				}
+				if(idx == 11)
+				{
+					rightShoulder = pos;
+				}
+					
 				
 				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, 1, .0f);
 			}
@@ -244,11 +293,16 @@ void SkelsApp::update()
 	// ---------------------------------------------------------------------------
 	float clmp = 100.0f;
 	diffLeftHand.x = math<float>::clamp(diffLeftHand.x, -clmp, clmp);
-	diffLeftHand.y = math<float>::clamp(diffLeftHand.y, -clmp, clmp);
+	//diffLeftHand.y = math<float>::clamp(diffLeftHand.y, -clmp, clmp);
+	diffLeftHand.z = math<float>::clamp(diffLeftHand.z, -clmp, clmp);
 	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
-	diffRightHand.y = math<float>::clamp(diffRightHand.y, -clmp, clmp);
-	center.vel = (diffLeftHand + diffRightHand) * Vec3f(2.5f, 2.5f, .0f);
+	//diffRightHand.y = math<float>::clamp(diffRightHand.y, -clmp, clmp);
+	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
+	center.vel = (diffLeftHand + diffRightHand) * Vec3f(2.5f, .0f, 2.5f);
 	if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
+	
+	Vec3f shoulders = leftShoulder - rightShoulder;
+	rot = math<float>::atan2(shoulders.z, shoulders.x);
 	
 	
 	// send OSC updates to Max
@@ -256,6 +310,26 @@ void SkelsApp::update()
 	
 	oscManager->send("/skels/center/x", center.pos.x);
 	oscManager->send("/skels/center/y", center.pos.y);
+	oscManager->send("/skels/rot", rot);
+	
+	// world
+	// ---------------------------------------------------------------------------
+	
+	//gameState.player = center;
+	world.update(gameState, dt);
+	vector<ObjPos> objPositions = world.getPositions();
+	
+	vector<ObjPos>::iterator opit;
+	for(opit = objPositions.begin(); opit != objPositions.end(); opit++)
+	{
+		ObjPos op = *opit;
+		stringstream ss;
+		ss << "/skels/obj/" << op.obj->objID << "/dx";
+		oscManager->send(ss.str(), op.delta.x);
+		stringstream ss2;
+		ss2 << "/skels/obj/" << op.obj->objID << "/dy";
+		oscManager->send(ss2.str(), op.delta.y);
+	}
 }
 
 void SkelsApp::renderBackground()
@@ -302,7 +376,7 @@ void SkelsApp::draw()
 	
 	// center on avatar's chest 'joint'
 	gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
-	cam.lookAt(Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, mParam_zoom), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, .0f));
+	cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
 	gl::setMatrices(cam);
 	
 	gl::color(Color(1.0f, 1.0f, .0f));
@@ -319,7 +393,12 @@ void SkelsApp::draw()
 		gl::color(Color(1.0f, .0f, .0f));
 		if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
 		gl::drawSphere(*it, 7.0f, 32);
+		//stringstream ss;
+		//ss << idx;
+		//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
 	}
+	
+	world.draw();
 
 	
 	// draw debug info: depth and colour tex
