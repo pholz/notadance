@@ -96,6 +96,8 @@ public:	// Members
 	float mParam_scaleY;
 	float mParam_scaleZ;
 	float mParam_zoom;
+	float mParam_zMax;
+	float mParam_zCenter;
 	
 	Font helvetica;
 	
@@ -145,10 +147,13 @@ void SkelsApp::setup()
 	
 	// init debug params
 	// ---------------------------------------------------------------------------
-	mParam_scaleX = .5f;
+	mParam_scaleX = .7f;
 	mParam_scaleY = -.5f;
-	mParam_scaleZ = -1.0f;
+	mParam_scaleZ = .25f;
 	mParam_zoom = 1000.0f;
+	mParam_zCenter = 1000.0f;
+	mParam_zMax = 2000.0f;
+	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex", &mParam_scaleX, "min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
 	mParams.addParam( "scaley", &mParam_scaleY, "min=-10.0 max=10.0 step=.01 keyIncr=Y keyDecr=y");
@@ -159,14 +164,17 @@ void SkelsApp::setup()
 	mParams.addParam( "center.pos.z", &center.pos.z, "" );
 	mParams.addParam( "rot", &rot, "" );
 	
-	helvetica = Font("Helvetica", 32) ;
+	mParams.addParam( "zCenter", &mParam_zCenter, "min=0.0 max=3000.0 step=1.0 keyIncr=O keyDecr=o" );
+	mParams.addParam( "zMax", &mParam_zMax, "min=0.0 max=3000.0 step=1.0 keyIncr=O keyDecr=o" );
+	
+	helvetica = Font("Helvetica", 24) ;
 	
 	// init camera
 	// ---------------------------------------------------------------------------
 	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
 	
-	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, .0f);
+	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, 1000.0f);
 	
 	// init timing
 	// ---------------------------------------------------------------------------
@@ -183,10 +191,10 @@ void SkelsApp::setup()
 	
 	gameState.player = &center;
 
-	ObjPtr o(new Obj3D(Vec3f(1000.0f, 1000.0f, .0f)));
+	ObjPtr o(new Obj3D(Vec3f(1000.0f, 0, 1000.0f)));
 	world.addObject(o);
 	
-	o.reset(new Obj3D(Vec3f(-1000.0f, -1000.0f, .0f)));
+	o.reset(new Obj3D(Vec3f(-1000.0f, 0, -1000.0f)));
 	world.addObject(o);
 }
 
@@ -245,7 +253,9 @@ void SkelsApp::update()
 				
 				console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
 
-				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, point.Z * mParam_scaleZ/10.0f - 1000.0f);
+				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, 
+								  HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, 
+								  mParam_zMax/2 + (point.Z - mParam_zCenter) * mParam_scaleZ);
 				
 				// 11, 5 shoulders
 				// 4 center
@@ -257,12 +267,14 @@ void SkelsApp::update()
 				}
 				if(idx == 10) 
 				{
-					diffLeftHand = pos - windowCenter - massCenter;
+					Vec3f val = pos + Vec3f(.0f, .0f, 70.0f);
+					diffLeftHand = val - windowCenter - massCenter;
 					
 				}
 				if(idx == 15)
 				{
-					diffRightHand = pos -windowCenter - massCenter;
+					Vec3f val = pos + Vec3f(.0f, .0f, 70.0f);
+					diffRightHand = val -windowCenter - massCenter;
 					lx = pos.x;
 					ly = pos.y;
 					lz = pos.z;
@@ -277,7 +289,7 @@ void SkelsApp::update()
 				}
 					
 				
-				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, 1, .0f);
+				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, .0f, 1.0f);
 			}
 			
 		}
@@ -309,7 +321,7 @@ void SkelsApp::update()
 	// ---------------------------------------------------------------------------
 	
 	oscManager->send("/skels/center/x", center.pos.x);
-	oscManager->send("/skels/center/y", center.pos.y);
+	oscManager->send("/skels/center/z", center.pos.z);
 	oscManager->send("/skels/rot", rot);
 	
 	// world
@@ -327,8 +339,8 @@ void SkelsApp::update()
 		ss << "/skels/obj/" << op.obj->objID << "/dx";
 		oscManager->send(ss.str(), op.delta.x);
 		stringstream ss2;
-		ss2 << "/skels/obj/" << op.obj->objID << "/dy";
-		oscManager->send(ss2.str(), op.delta.y);
+		ss2 << "/skels/obj/" << op.obj->objID << "/dz";
+		oscManager->send(ss2.str(), -op.delta.z);
 	}
 }
 
@@ -342,16 +354,16 @@ void SkelsApp::renderBackground()
 	for(int i = 0; i < 100; i++)
 		for(int j = 0; j < 100; j++)
 		{
-			if(center.pos.distance(Vec3f(i*1000-50000, j*1000-50000, .0f)) > getWindowWidth() * 2) continue;
+			if(center.pos.distance(Vec3f(i*1000-50000, .0, j*1000-50000)) > getWindowWidth() * 2) continue;
 			
 			glPushMatrix();
-			gl::translate(Vec3f(i * 1000 - 50000, j * 1000 - 50000, -300.0f));
+			gl::translate(Vec3f(i * 1000 - 50000, -300.0f, j * 1000 - 50000));
 			gl::color(ColorA(1.0f, .5f, 1.0f, .7f));
 			glLineWidth(1.0f);
 			glLineStipple(3, 0xAAAA);
 			glEnable(GL_LINE_STIPPLE);
-			gl::drawLine(Vec2f(-520.0f, 0.0f), Vec2f(520.0f, 0.0f));
-			gl::drawLine(Vec2f(.0f, -520.0f), Vec2f(0.0f, 520.0f));
+			gl::drawLine(Vec3f(-520.0f, .0f, 0.0f), Vec3f(520.0f, .0f, 0.0f));
+			gl::drawLine(Vec3f(.0f, .0f, -520.0f), Vec3f(0.0f, .0f, 520.0f));
 			glDisable(GL_LINE_STIPPLE);
 			glPopMatrix();
 		}
@@ -363,7 +375,7 @@ void SkelsApp::renderBackground()
 		glPushMatrix();
 		gl::translate(Vec3f(j * 2000 - 50000, .0f, -2000.0f));
 		gl::color(ColorA(.7f, .2f, .7f, .4f));
-		gl::drawLine(Vec2f(.0f, -45000.0f), Vec2f(0.0f, 45000.0f));
+		gl::drawLine(Vec3f(.0f, .0f, -45000.0f), Vec3f(0.0f, .0f, 45000.0f));
 		glPopMatrix();
 	}
 	
@@ -380,7 +392,7 @@ void SkelsApp::draw()
 	gl::setMatrices(cam);
 	
 	gl::color(Color(1.0f, 1.0f, .0f));
-	gl::drawSphere(Vec3f(center.pos.x, center.pos.y, .0f), 30.0f, 32);
+	gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
 	
 	renderBackground();
 	
