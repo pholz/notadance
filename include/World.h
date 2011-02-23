@@ -27,6 +27,7 @@ public:
 	World();
 	void update(GameState gs, float dt);
 	void addObject(ObjPtr);
+	void removeObject(int objID);
 	void draw();
 	vector<ObjPos> getPositions();
 	

@@ -46,6 +46,16 @@ void World::addObject(ObjPtr obj)
 	things.push_back(obj);
 }
 
+void World::removeObject(int objID)
+{
+	vector<ObjPtr>::iterator obit;
+	for(obit = things.begin(); obit != things.end(); obit++)
+	{
+		if((*obit)->objID == objID)
+			things.erase(obit);
+	}
+}
+
 vector<ObjPos> World::getPositions()
 {
 	vector<ObjPos> positions;

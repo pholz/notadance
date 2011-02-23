@@ -15,6 +15,7 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/params/Params.h"
 #include "cinder/Camera.h"
+#include "cinder/Rand.h"
 #include "VOpenNIHeaders.h"
 #include <sstream>
 #include "OscManager.h"
@@ -98,11 +99,14 @@ public:	// Members
 	float mParam_zoom;
 	float mParam_zMax;
 	float mParam_zCenter;
+	float mParam_zWindowCenter;
+	float mParam_collectDistance;
+	float mParam_zArmAdjust;
 	
 	Font helvetica;
 	
 	Obj3D center, leftHand, rightHand, lastCenter;
-	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm;
 	float lx, ly, lz, rot;
 	
 	CameraPersp cam;
@@ -115,6 +119,8 @@ public:	// Members
 	
 	World world;
 	GameState gameState;
+	
+	Rand random;
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
@@ -151,8 +157,11 @@ void SkelsApp::setup()
 	mParam_scaleY = -.5f;
 	mParam_scaleZ = .25f;
 	mParam_zoom = 1000.0f;
-	mParam_zCenter = 1000.0f;
+	mParam_zCenter = 1700.0f;
+	mParam_zWindowCenter = 1000.0f;
 	mParam_zMax = 2000.0f;
+	mParam_collectDistance = 200.0f;
+	mParam_zArmAdjust = 50.0f;
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex", &mParam_scaleX, "min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
@@ -164,8 +173,12 @@ void SkelsApp::setup()
 	mParams.addParam( "center.pos.z", &center.pos.z, "" );
 	mParams.addParam( "rot", &rot, "" );
 	
-	mParams.addParam( "zCenter", &mParam_zCenter, "min=0.0 max=3000.0 step=1.0 keyIncr=O keyDecr=o" );
-	mParams.addParam( "zMax", &mParam_zMax, "min=0.0 max=3000.0 step=1.0 keyIncr=O keyDecr=o" );
+	mParams.addParam( "zCenter", &mParam_zCenter, "min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zWindowCenter", &mParam_zWindowCenter, "min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zMax", &mParam_zMax, "min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zArmAdjust", &mParam_zArmAdjust, "min=-250.0 max=250.0 step=1.0" );
+	
+	mParams.addParam( "collectDistance", &mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
 	
 	helvetica = Font("Helvetica", 24) ;
 	
@@ -174,7 +187,7 @@ void SkelsApp::setup()
 	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
 	
-	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, 1000.0f);
+	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, mParam_zWindowCenter);
 	
 	// init timing
 	// ---------------------------------------------------------------------------
@@ -194,8 +207,8 @@ void SkelsApp::setup()
 	ObjPtr o(new Obj3D(Vec3f(1000.0f, 0, 1000.0f)));
 	world.addObject(o);
 	
-	o.reset(new Obj3D(Vec3f(-1000.0f, 0, -1000.0f)));
-	world.addObject(o);
+//	o.reset(new Obj3D(Vec3f(-1000.0f, 0, -1000.0f)));
+//	world.addObject(o);
 }
 
 void SkelsApp::mouseDown( MouseEvent event )
@@ -267,13 +280,13 @@ void SkelsApp::update()
 				}
 				if(idx == 10) 
 				{
-					Vec3f val = pos + Vec3f(.0f, .0f, 70.0f);
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust);
 					diffLeftHand = val - windowCenter - massCenter;
 					
 				}
 				if(idx == 15)
 				{
-					Vec3f val = pos + Vec3f(.0f, .0f, 70.0f);
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust);
 					diffRightHand = val -windowCenter - massCenter;
 					lx = pos.x;
 					ly = pos.y;
@@ -316,12 +329,19 @@ void SkelsApp::update()
 	Vec3f shoulders = leftShoulder - rightShoulder;
 	rot = math<float>::atan2(shoulders.z, shoulders.x);
 	
+	shoulders.y = .0f;
+	
+	shoulders_norm = shoulders.normalized();
+	shoulders_norm.rotateY(-M_PI_2);
+	shoulders_norm.normalize();
+	
 	
 	// send OSC updates to Max
 	// ---------------------------------------------------------------------------
 	
 	oscManager->send("/skels/center/x", center.pos.x);
 	oscManager->send("/skels/center/z", center.pos.z);
+	oscManager->send("/skels/center/vel", center.vel.length());
 	oscManager->send("/skels/rot", rot);
 	
 	// world
@@ -332,6 +352,7 @@ void SkelsApp::update()
 	vector<ObjPos> objPositions = world.getPositions();
 	
 	vector<ObjPos>::iterator opit;
+	int toRemove = -1;
 	for(opit = objPositions.begin(); opit != objPositions.end(); opit++)
 	{
 		ObjPos op = *opit;
@@ -341,6 +362,21 @@ void SkelsApp::update()
 		stringstream ss2;
 		ss2 << "/skels/obj/" << op.obj->objID << "/dz";
 		oscManager->send(ss2.str(), -op.delta.z);
+		
+		if(op.distance < mParam_collectDistance)
+		{
+			oscManager->send("/skels/collect", 1.0f);
+			
+			toRemove = op.obj->objID;
+			
+			ObjPtr o(new Obj3D(Vec3f(random.nextFloat(-10000.0f, 10000.0f), .0f, random.nextFloat(-10000.0f, 10000.0f))));
+			world.addObject(o);
+		}
+	}
+	
+	if(toRemove > -1)
+	{
+		world.removeObject(toRemove);
 	}
 }
 
@@ -403,8 +439,14 @@ void SkelsApp::draw()
 	for(it = joints.begin(); it != joints.end(); it++, idx++)
 	{
 		gl::color(Color(1.0f, .0f, .0f));
+		float rad = 7.0f;
 		if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
-		gl::drawSphere(*it, 7.0f, 32);
+		else if(idx == 4) {
+				gl::color(Color(1.0f, .0f, 1.0f));
+			rad = 10.0f;
+		}
+		else continue;
+		gl::drawSphere(*it, rad, 32);
 		//stringstream ss;
 		//ss << idx;
 		//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
