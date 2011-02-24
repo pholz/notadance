@@ -102,6 +102,7 @@ public:	// Members
 	float mParam_zWindowCenter;
 	float mParam_collectDistance;
 	float mParam_zArmAdjust;
+	float mParam_velThreshold;
 	
 	Font helvetica;
 	
@@ -146,39 +147,45 @@ void SkelsApp::setup()
 
 	gl::Texture::Format format;
 	gl::Texture::Format depthFormat;
-	mColorTex = gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
-	mDepthTex = gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
-	mOneUserTex = gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+	mColorTex =			gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
+	mDepthTex =			gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+	mOneUserTex =		gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
 	
 	
 	// init debug params
 	// ---------------------------------------------------------------------------
-	mParam_scaleX = .7f;
-	mParam_scaleY = -.5f;
-	mParam_scaleZ = .25f;
-	mParam_zoom = 1000.0f;
-	mParam_zCenter = 1700.0f;
-	mParam_zWindowCenter = 1000.0f;
-	mParam_zMax = 2000.0f;
-	mParam_collectDistance = 200.0f;
-	mParam_zArmAdjust = 50.0f;
+	mParam_scaleX =					.7f;
+	mParam_scaleY =					-.5f;
+	mParam_scaleZ =					.25f;
+	
+	mParam_zoom =					1000.0f;
+	
+	mParam_zCenter =				1700.0f;
+	mParam_zWindowCenter =			1000.0f;
+	mParam_zMax =					2000.0f;
+	
+	mParam_collectDistance =		200.0f;
+	mParam_zArmAdjust =				16.0f;
+	mParam_velThreshold =			160.0f;
+	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
-	mParams.addParam( "scalex", &mParam_scaleX, "min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
-	mParams.addParam( "scaley", &mParam_scaleY, "min=-10.0 max=10.0 step=.01 keyIncr=Y keyDecr=y");
-	mParams.addParam( "scalez", &mParam_scaleZ, "min=-10.0 max=10.0 step=.01 keyIncr=Z keyDecr=z" );
-	mParams.addParam( "zoom", &mParam_zoom, "min=-1000.0 max=10000.0 step=1.0 keyIncr=O keyDecr=o" );
-	mParams.addParam( "center.pos.x", &center.pos.x, "" );
-	mParams.addParam( "center.pos.y", &center.pos.y, "" );
-	mParams.addParam( "center.pos.z", &center.pos.z, "" );
-	mParams.addParam( "rot", &rot, "" );
+	mParams.addParam( "scalex",				&mParam_scaleX,		"min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
+	mParams.addParam( "scaley",				&mParam_scaleY,		"min=-10.0 max=10.0 step=.01 keyIncr=Y keyDecr=y");
+	mParams.addParam( "scalez",				&mParam_scaleZ,		"min=-10.0 max=10.0 step=.01 keyIncr=Z keyDecr=z" );
+	mParams.addParam( "zoom",				&mParam_zoom,		"min=-1000.0 max=10000.0 step=1.0 keyIncr=O keyDecr=o" );
+	mParams.addParam( "center.pos.x",		&center.pos.x, "" );
+	mParams.addParam( "center.pos.y",		&center.pos.y, "" );
+	mParams.addParam( "center.pos.z",		&center.pos.z, "" );
+	mParams.addParam( "rot",				&rot, "" );
 	
-	mParams.addParam( "zCenter", &mParam_zCenter, "min=0.0 max=3000.0 step=1.0" );
-	mParams.addParam( "zWindowCenter", &mParam_zWindowCenter, "min=0.0 max=3000.0 step=1.0" );
-	mParams.addParam( "zMax", &mParam_zMax, "min=0.0 max=3000.0 step=1.0" );
-	mParams.addParam( "zArmAdjust", &mParam_zArmAdjust, "min=-250.0 max=250.0 step=1.0" );
+	mParams.addParam( "zCenter",			&mParam_zCenter,		"min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zWindowCenter",		&mParam_zWindowCenter,	"min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zMax",				&mParam_zMax,			"min=0.0 max=3000.0 step=1.0" );
+	mParams.addParam( "zArmAdjust",			&mParam_zArmAdjust,		"min=-250.0 max=250.0 step=1.0" );
+	mParams.addParam( "velThreshold",		&mParam_velThreshold,	"min=0.0 max=1000.0 step=1.0" );
 	
-	mParams.addParam( "collectDistance", &mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
+	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
 	
 	helvetica = Font("Helvetica", 24) ;
 	
@@ -280,13 +287,14 @@ void SkelsApp::update()
 				}
 				if(idx == 10) 
 				{
-					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust);
+					// adjust the z bias of arms to body depending on how much we are facing fwd or back. if back, take the double to account for the nonlinear distance estimation
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffLeftHand = val - windowCenter - massCenter;
 					
 				}
 				if(idx == 15)
 				{
-					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust);
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRightHand = val -windowCenter - massCenter;
 					lx = pos.x;
 					ly = pos.y;
@@ -316,14 +324,18 @@ void SkelsApp::update()
 	
 	// calc new velocity based on distances from hand to body center
 	// ---------------------------------------------------------------------------
-	float clmp = 100.0f;
+	float clmp = 150.0f;
 	diffLeftHand.x = math<float>::clamp(diffLeftHand.x, -clmp, clmp);
 	//diffLeftHand.y = math<float>::clamp(diffLeftHand.y, -clmp, clmp);
 	diffLeftHand.z = math<float>::clamp(diffLeftHand.z, -clmp, clmp);
 	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
 	//diffRightHand.y = math<float>::clamp(diffRightHand.y, -clmp, clmp);
 	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
-	center.vel = (diffLeftHand + diffRightHand) * Vec3f(2.5f, .0f, 2.5f);
+	
+	Vec3f totaldiff = diffLeftHand + diffRightHand;
+	if(totaldiff.length() < mParam_velThreshold) totaldiff = Vec3f();
+	
+	center.vel = totaldiff * Vec3f(2.5f, .0f, 2.5f);
 	if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
 	
 	Vec3f shoulders = leftShoulder - rightShoulder;
