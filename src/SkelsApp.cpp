@@ -9,6 +9,8 @@
 ***/
 
 
+
+#include "common.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/imageio.h"
 #include "cinder/gl/gl.h"
@@ -32,6 +34,15 @@ using namespace ci::app;
 using namespace std;
 
 
+
+
+enum AppState
+{
+	SK_DETECTING,
+	SK_TRACKING,
+	SK_SHUTDOWN
+};
+
 class SkelsApp : public AppBasic 
 {
 public:
@@ -53,6 +64,7 @@ public:
 	void keyDown( KeyEvent event );
 	void renderBackground();
 	void shutdown();
+	void enterState(AppState s);
 	
 	ImageSourceRef getColorImage()
 	{
@@ -104,7 +116,7 @@ public:	// Members
 	float mParam_zArmAdjust;
 	float mParam_velThreshold;
 	
-	Font helvetica;
+	Font helvetica, helvetica48;
 	
 	Obj3D center, leftHand, rightHand, lastCenter;
 	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm;
@@ -122,6 +134,11 @@ public:	// Members
 	GameState gameState;
 	
 	Rand random;
+	
+	bool tracking;
+	AppState state;
+	
+	string global_debug;
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
@@ -137,6 +154,7 @@ void SkelsApp::setup()
 	// ---------------------------------------------------------------------------
 	_manager = V::OpenNIDeviceManager::InstancePtr();
 	_device0 = _manager->createDevice( "data/configIR.xml", true );
+	_device0->debugStr = &global_debug;
 	if( !_device0 ) 
 	{
 		DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
@@ -188,6 +206,7 @@ void SkelsApp::setup()
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
 	
 	helvetica = Font("Helvetica", 24) ;
+	helvetica48 = Font("Helvetica Bold", 48) ;
 	
 	// init camera
 	// ---------------------------------------------------------------------------
@@ -203,7 +222,7 @@ void SkelsApp::setup()
 	// init osc manager
 	// ---------------------------------------------------------------------------
 	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT);
-	oscManager->send("/skels/start", 1.0f);
+	
 	
 	
 	// world
@@ -216,6 +235,21 @@ void SkelsApp::setup()
 	
 //	o.reset(new Obj3D(Vec3f(-1000.0f, 0, -1000.0f)));
 //	world.addObject(o);
+	
+	tracking = false;
+	enterState(SK_DETECTING);
+}
+
+void SkelsApp::enterState(AppState s)
+{
+	state = s;
+	
+	switch(s)
+	{
+	case SK_DETECTING:
+		global_debug = "waiting for user"; break;
+	default: ;
+	}
 }
 
 void SkelsApp::mouseDown( MouseEvent event )
@@ -247,6 +281,13 @@ void SkelsApp::update()
 	// ---------------------------------------------------------------------------
 	if( _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
 	{
+		if(!tracking)
+		{
+			tracking = true;
+			enterState(SK_TRACKING);
+			oscManager->send("/skels/start", 1.0f);
+		}
+		
 		center.update(dt);
 
 		xn::DepthGenerator* depth = _device0->getDepthGenerator();
@@ -434,37 +475,42 @@ void SkelsApp::draw()
 	gl::clear( Color( 0, 0, 0 ), true ); 
 	gl::enableAlphaBlending( false );
 	
-	// center on avatar's chest 'joint'
-	gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
-	cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
-	gl::setMatrices(cam);
-	
-	gl::color(Color(1.0f, 1.0f, .0f));
-	gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
-	
-	renderBackground();
-	
-	// draw individual joints
-	// ---------------------------------------------------------------------------
-	vector<Vec3f>::iterator it;
-	int idx = 0;
-	for(it = joints.begin(); it != joints.end(); it++, idx++)
+	if(state == SK_TRACKING)
 	{
-		gl::color(Color(1.0f, .0f, .0f));
-		float rad = 7.0f;
-		if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
-		else if(idx == 4) {
-				gl::color(Color(1.0f, .0f, 1.0f));
-			rad = 10.0f;
-		}
-		else continue;
-		gl::drawSphere(*it, rad, 32);
-		//stringstream ss;
-		//ss << idx;
-		//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
-	}
 	
-	world.draw();
+		// center on avatar's chest 'joint'
+		gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
+		cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
+		gl::setMatrices(cam);
+		
+		gl::color(Color(1.0f, 1.0f, .0f));
+		gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
+		
+		renderBackground();
+		
+		// draw individual joints
+		// ---------------------------------------------------------------------------
+		vector<Vec3f>::iterator it;
+		int idx = 0;
+		for(it = joints.begin(); it != joints.end(); it++, idx++)
+		{
+			gl::color(Color(1.0f, .0f, .0f));
+			float rad = 7.0f;
+			if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
+			else if(idx == 4) {
+					gl::color(Color(1.0f, .0f, 1.0f));
+				rad = 10.0f;
+			}
+			else continue;
+			gl::drawSphere(*it, rad, 32);
+			//stringstream ss;
+			//ss << idx;
+			//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
+		}
+		
+		world.draw();
+		
+	}
 
 	
 	// draw debug info: depth and colour tex
@@ -487,6 +533,12 @@ void SkelsApp::draw()
 	// debug params
 	// ---------------------------------------------------------------------------
 	params::InterfaceGl::draw();
+	
+	// draw state-dependent info
+	// ---------------------------------------------------------------------------
+	if(state != SK_TRACKING)
+		gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+	
 }
 
 
