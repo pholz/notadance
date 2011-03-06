@@ -54,6 +54,16 @@ public:
 		vel += acc * dt;
 	}
 	
+	virtual bool collideXZ(Vec3f _pos, Vec3f _vel)
+	{
+		return false;
+	}
+	
+	virtual void draw()
+	{
+		
+	}
+	
 	
 	Vec3f pos, vel, acc;
 	int objID;

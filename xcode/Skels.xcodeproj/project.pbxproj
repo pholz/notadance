@@ -28,6 +28,7 @@
 		66325E7A12FCEF3500E95797 /* VOpenNIDeviceManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3212FCEF3500E95797 /* VOpenNIDeviceManager.cpp */; };
 		66325E7B12FCEF3500E95797 /* VOpenNIUser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */; };
 		66325E8E12FDF81700E95797 /* SkelsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E8D12FDF81700E95797 /* SkelsApp.cpp */; };
+		66618E67131EA9C100CDEACF /* Box3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66618E66131EA9C100CDEACF /* Box3D.cpp */; };
 		66674D9F13048564004CFE8F /* OscBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9B13048564004CFE8F /* OscBundle.cpp */; };
 		66674DA013048564004CFE8F /* OscListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9C13048564004CFE8F /* OscListener.cpp */; };
 		66674DA113048564004CFE8F /* OscMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9D13048564004CFE8F /* OscMessage.cpp */; };
@@ -123,6 +124,8 @@
 		66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VOpenNIUser.cpp; sourceTree = "<group>"; };
 		66325E8C12FDF81200E95797 /* Skels_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skels_Prefix.pch; sourceTree = "<group>"; };
 		66325E8D12FDF81700E95797 /* SkelsApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkelsApp.cpp; path = ../src/SkelsApp.cpp; sourceTree = SOURCE_ROOT; };
+		66618E66131EA9C100CDEACF /* Box3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Box3D.cpp; path = ../src/Box3D.cpp; sourceTree = SOURCE_ROOT; };
+		66618E68131EA9D200CDEACF /* Box3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Box3D.h; path = ../include/Box3D.h; sourceTree = SOURCE_ROOT; };
 		66674D9B13048564004CFE8F /* OscBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscBundle.cpp; path = ../../../../osc/src/OscBundle.cpp; sourceTree = SOURCE_ROOT; };
 		66674D9C13048564004CFE8F /* OscListener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscListener.cpp; path = ../../../../osc/src/OscListener.cpp; sourceTree = SOURCE_ROOT; };
 		66674D9D13048564004CFE8F /* OscMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscMessage.cpp; path = ../../../../osc/src/OscMessage.cpp; sourceTree = SOURCE_ROOT; };
@@ -166,6 +169,7 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				66618E66131EA9C100CDEACF /* Box3D.cpp */,
 				66E3B54C13076045003958D5 /* World.cpp */,
 				66325E8D12FDF81700E95797 /* SkelsApp.cpp */,
 				66E3B59713077473003958D5 /* Obj3D.cpp */,
@@ -232,6 +236,7 @@
 				66674DEA1304AD73004CFE8F /* KinectImages.h */,
 				66E3B5521307645A003958D5 /* common.h */,
 				66E3B55413076863003958D5 /* Player.h */,
+				66618E68131EA9D200CDEACF /* Box3D.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -490,6 +495,7 @@
 				66674DA213048564004CFE8F /* OscSender.cpp in Sources */,
 				66E3B54D13076045003958D5 /* World.cpp in Sources */,
 				66E3B59813077473003958D5 /* Obj3D.cpp in Sources */,
+				66618E67131EA9C100CDEACF /* Box3D.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

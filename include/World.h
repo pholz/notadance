@@ -7,7 +7,7 @@
  *
  */
 
-#include "Obj3D.h"
+#include "Box3D.h"
 #include "cinder/Cinder.h"
 #include "cinder/gl/gl.h"
 #include <vector>
@@ -27,10 +27,11 @@ public:
 	World();
 	void update(GameState gs, float dt);
 	void addObject(ObjPtr);
+	void addObstacle(ObjPtr);
 	void removeObject(int objID);
 	void draw();
 	vector<ObjPos> getPositions();
 	
-	vector<ObjPtr> things; 
+	vector<ObjPtr> things, obstacles; 
 	GameState gameState;
 };

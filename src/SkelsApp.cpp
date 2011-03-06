@@ -25,9 +25,12 @@
 //#include "common.h"
 #include "World.h"
 #include "KinectImages.h"
+#include <queue>
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
 #define OSC_RECEIVE_PORT 3000
+#define DEBUGMODE true
+#define OBJ_ID_EXIT 6
 
 using namespace ci;
 using namespace ci::app;
@@ -40,6 +43,8 @@ enum AppState
 {
 	SK_DETECTING,
 	SK_TRACKING,
+	SK_KEYBOARD,
+	SK_CLEARING_LEVEL,
 	SK_SHUTDOWN
 };
 
@@ -97,6 +102,8 @@ public:
 	}
 
 public:	// Members
+	
+	// ONI
 	V::OpenNIDeviceManager*	_manager;
 	V::OpenNIDevice::Ref	_device0;
 
@@ -104,6 +111,28 @@ public:	// Members
 	gl::Texture				mDepthTex;
 	gl::Texture				mOneUserTex;	
 	
+	// objects, coordinates, world
+	Obj3D center, leftHand, rightHand, lastCenter;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm;
+	float lx, ly, lz, rot;
+	World world;
+	GameState gameState;
+	vector<Vec3f> joints;
+	
+	// cam & timing
+	CameraPersp cam;
+	float lastUpdate;
+	
+	// FSM
+	AppState state;
+	bool bDebugMode;
+	string global_debug;
+	
+	// utils
+	OscManager* oscManager;
+	Rand random;
+	
+	// dbg params
 	params::InterfaceGl		mParams;
 	float mParam_scaleX;
 	float mParam_scaleY;
@@ -116,29 +145,11 @@ public:	// Members
 	float mParam_zArmAdjust;
 	float mParam_velThreshold;
 	
+	// fonts, layouts
 	Font helvetica, helvetica48;
 	
-	Obj3D center, leftHand, rightHand, lastCenter;
-	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm;
-	float lx, ly, lz, rot;
-	
-	CameraPersp cam;
-	
-	float lastUpdate;
-	
-	vector<Vec3f> joints;
-	
-	OscManager* oscManager;
-	
-	World world;
-	GameState gameState;
-	
-	Rand random;
-	
-	bool tracking;
-	AppState state;
-	
-	string global_debug;
+	queue<Vec3f> objectLocations;
+
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
@@ -233,11 +244,17 @@ void SkelsApp::setup()
 	ObjPtr o(new Obj3D(Vec3f(1000.0f, 0, 1000.0f)));
 	world.addObject(o);
 	
-//	o.reset(new Obj3D(Vec3f(-1000.0f, 0, -1000.0f)));
-//	world.addObject(o);
 	
-	tracking = false;
+	o.reset(new Box3D(Vec3f(.0f, .0f, -1000.0f), Vec3f(5000.0f, 1000.0f, 200.0f)));
+	world.addObstacle(o);
+	
+	objectLocations.push(Vec3f(-900,0,-1400));
+	
+	
+	// state mgmt
+	// ---------------------------------------------------------------------------
 	enterState(SK_DETECTING);
+	bDebugMode = DEBUGMODE;
 }
 
 void SkelsApp::enterState(AppState s)
@@ -247,7 +264,11 @@ void SkelsApp::enterState(AppState s)
 	switch(s)
 	{
 	case SK_DETECTING:
-		global_debug = "waiting for user"; break;
+		global_debug = "waiting for user"; 
+		break;
+	case SK_CLEARING_LEVEL:
+		oscManager->send("/skels/enterstate/clearlevel", 1.0f);
+		break;
 	default: ;
 	}
 }
@@ -281,9 +302,8 @@ void SkelsApp::update()
 	// ---------------------------------------------------------------------------
 	if( _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
 	{
-		if(!tracking)
+		if(state != SK_TRACKING)
 		{
-			tracking = true;
 			enterState(SK_TRACKING);
 			oscManager->send("/skels/start", 1.0f);
 		}
@@ -416,20 +436,48 @@ void SkelsApp::update()
 		ss2 << "/skels/obj/" << op.obj->objID << "/dz";
 		oscManager->send(ss2.str(), -op.delta.z);
 		
+		// check if player has collected a sound
 		if(op.distance < mParam_collectDistance)
 		{
-			oscManager->send("/skels/collect", 1.0f);
+			oscManager->send("/skels/event/collect", 1.0f);
 			
 			toRemove = op.obj->objID;
 			
-			ObjPtr o(new Obj3D(Vec3f(random.nextFloat(-10000.0f, 10000.0f), .0f, random.nextFloat(-10000.0f, 10000.0f))));
-			world.addObject(o);
+			if(toRemove == OBJ_ID_EXIT)
+			{
+				enterState(SK_CLEARING_LEVEL);
+			}
+			
+			//ObjPtr o(new Obj3D(Vec3f(random.nextFloat(center.pos.x-5000.0f, center.pos.x+5000.0f), .0f, random.nextFloat(center.pos.z-5000.0f, center.pos.z+5000.0f))));
+			if(objectLocations.size() > 0)
+			{
+				ObjPtr o(new Obj3D(objectLocations.front()));
+				
+				objectLocations.pop();
+				
+				world.addObject(o);
+			}
+			
 		}
 	}
 	
 	if(toRemove > -1)
 	{
 		world.removeObject(toRemove);
+	}
+	
+	vector<ObjPtr>::iterator obsit;
+	for(obsit = world.obstacles.begin(); obsit != world.obstacles.end(); obsit++)
+	{
+		ObjPtr op = *obsit;
+		
+		bool coll = op->collideXZ(center.pos, center.vel);
+		
+		if(coll)
+		{
+			center.vel = Vec3f();
+			oscManager->send("/skels/event/obstacle", 1.0f);
+		}
 	}
 }
 
@@ -475,66 +523,93 @@ void SkelsApp::draw()
 	gl::clear( Color( 0, 0, 0 ), true ); 
 	gl::enableAlphaBlending( false );
 	
-	if(state == SK_TRACKING)
+	// in debug mode
+	// ---------------------------------------------------------------------------
+	if(bDebugMode)
 	{
-	
-		// center on avatar's chest 'joint'
-		gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
-		cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
-		gl::setMatrices(cam);
-		
-		gl::color(Color(1.0f, 1.0f, .0f));
-		gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
-		
-		renderBackground();
-		
-		// draw individual joints
-		// ---------------------------------------------------------------------------
-		vector<Vec3f>::iterator it;
-		int idx = 0;
-		for(it = joints.begin(); it != joints.end(); it++, idx++)
+		if(state == SK_TRACKING)
 		{
-			gl::color(Color(1.0f, .0f, .0f));
-			float rad = 7.0f;
-			if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
-			else if(idx == 4) {
-					gl::color(Color(1.0f, .0f, 1.0f));
-				rad = 10.0f;
+			// draw dbg coord system etc
+			// ---------------------------------------------------------------------------
+			
+			// center on avatar's chest 'joint'
+			gl::setMatricesWindowPersp( WIDTH, HEIGHT, 60.0f, 1.0f, 1000.0f);
+			cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
+			gl::setMatrices(cam);
+			
+			gl::color(Color(1.0f, 1.0f, .0f));
+			gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
+			
+			renderBackground();
+			
+			// draw individual joints
+			// ---------------------------------------------------------------------------
+			vector<Vec3f>::iterator it;
+			int idx = 0;
+			for(it = joints.begin(); it != joints.end(); it++, idx++)
+			{
+				gl::color(Color(1.0f, .0f, .0f));
+				float rad = 7.0f;
+				if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
+				else if(idx == 4) {
+						gl::color(Color(1.0f, .0f, 1.0f));
+					rad = 10.0f;
+				}
+				else continue;
+				gl::drawSphere(*it, rad, 32);
+				//stringstream ss;
+				//ss << idx;
+				//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
 			}
-			else continue;
-			gl::drawSphere(*it, rad, 32);
-			//stringstream ss;
-			//ss << idx;
-			//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
+			
+			world.draw();
+			
+		} // endif state tracking
+
+		
+		// draw debug info: depth and colour tex
+		// ---------------------------------------------------------------------------
+
+		gl::setMatricesWindow( WIDTH, HEIGHT );
+
+		float sx = 320/2;
+		float sy = 240/2;
+		float xoff = 10;
+		float yoff = 10;
+		
+		glEnable( GL_TEXTURE_2D );
+		gl::color( cinder::ColorA(1, 1, 1, 1) );
+		gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
+		gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
+		glDisable( GL_TEXTURE_2D );
+		
+		
+		// debug params
+		// ---------------------------------------------------------------------------
+		params::InterfaceGl::draw();
+		
+	} // endif debug mode
+	
+	// not in debug mode
+	// ---------------------------------------------------------------------------
+	else 
+	{
+		gl::setMatricesWindow( WIDTH, HEIGHT );
+		float brightness = random.nextFloat(.5f);
+		gl::clear( Color(brightness,brightness,brightness), true ); 
+		
+		if(state == SK_TRACKING)
+		{
+			gl::drawStringCentered("rescue the lost, and escape", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
 		}
-		
-		world.draw();
-		
-	}
-
-	
-	// draw debug info: depth and colour tex
-	// ---------------------------------------------------------------------------
-
-	gl::setMatricesWindow( WIDTH, HEIGHT );
-
-	float sx = 320/2;
-	float sy = 240/2;
-	float xoff = 10;
-	float yoff = 10;
-	
-	glEnable( GL_TEXTURE_2D );
-	gl::color( cinder::ColorA(1, 1, 1, 1) );
-	gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
-	gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
-	glDisable( GL_TEXTURE_2D );
+		else
+		{
+			
+		}
+	} // endif not in debug mode
 	
 	
-	// debug params
-	// ---------------------------------------------------------------------------
-	params::InterfaceGl::draw();
-	
-	// draw state-dependent info
+	// regardless of debug mode
 	// ---------------------------------------------------------------------------
 	if(state != SK_TRACKING)
 		gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
@@ -546,10 +621,17 @@ void SkelsApp::draw()
 
 void SkelsApp::keyDown( KeyEvent event )
 {
+	// clean shutdown
 	if( event.getCode() == KeyEvent::KEY_ESCAPE )
 	{
 		this->quit();
 		this->shutdown();
+	}
+	
+	// toggle debug mode
+	else if( event.getChar() == 'd' )
+	{
+		bDebugMode = !bDebugMode;
 	}
 }
 

@@ -8,6 +8,7 @@
  */
 
 #include "World.h"
+#include "Box3D.h"
 
 World::World()
 {
@@ -37,6 +38,20 @@ void World::draw()
 		gl::color(Color(.5f, .5f, 1.0f));
 		gl::drawSphere(obj->pos, 20.0f, 32);
 		
+		gl::color(Color(.5f, .5f, 1.0f));
+		gl::drawVector(gameState.player->pos, gameState.player->pos + (obj->pos-gameState.player->pos).normalized() * 100.0f);
+		
+		//glPopMatrix();
+	}
+	
+	for(obit = obstacles.begin(); obit != obstacles.end(); obit++)
+	{
+		ObjPtr obj = *obit;
+		
+		//glPushMatrix();
+		gl::color(Color(.0f, .0f, 1.0f));
+		obj->draw();
+
 		//glPopMatrix();
 	}
 }
@@ -44,6 +59,11 @@ void World::draw()
 void World::addObject(ObjPtr obj)
 {
 	things.push_back(obj);
+}
+
+void World::addObstacle(ObjPtr obj)
+{
+	obstacles.push_back(obj);
 }
 
 void World::removeObject(int objID)
