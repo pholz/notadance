@@ -41,4 +41,13 @@ public:
 		sender.sendMessage(message);
 	}
 	
+	void send(string address, string value)
+	{
+		osc::Message message;
+		message.addStringArg(value);
+		message.setAddress(address);
+		message.setRemoteEndpoint(m_send_host, m_send_port);
+		sender.sendMessage(message);
+	}
+	
 };

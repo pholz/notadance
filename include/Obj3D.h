@@ -22,10 +22,12 @@ public:
 		init();
 	}
 	
-	Obj3D(Vec3f _pos) {
+	Obj3D(int objid, string _name, Vec3f _pos) {
 		pos = _pos;
 		vel = Vec3f(.0f, .0f, .0f);
 		acc = Vec3f(.0f, .0f, .0f);
+		objID = objid;
+		name = _name;
 		init();
 	}
 	
@@ -43,9 +45,25 @@ public:
 		init();
 	}
 	
+	void setName(string _name)
+	{
+		name = _name;
+	}
+	
+	void setID(int _id)
+	{
+		objID = _id;
+	}
+	
+	
 	void init()
 	{
-		objID = objIDcounter++;
+		soundActive = false;
+	}
+	
+	void setSoundActive(bool a)
+	{
+		soundActive = a;
 	}
 	
 	void update(float dt)
@@ -68,12 +86,10 @@ public:
 	Vec3f pos, vel, acc;
 	int objID;
 	static int objIDcounter;
+	string name;
+	bool soundActive;
 	
 };
 
 typedef shared_ptr<Obj3D> ObjPtr;
 
-typedef struct
-{
-	Obj3D *player;
-} GameState;
