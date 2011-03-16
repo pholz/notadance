@@ -7,6 +7,7 @@
  *
  */
 
+#include "common.h"
 #include "Box3D.h"
 #include "cinder/Cinder.h"
 #include "cinder/gl/gl.h"

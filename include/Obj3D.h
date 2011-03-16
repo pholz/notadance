@@ -61,10 +61,7 @@ public:
 		soundActive = false;
 	}
 	
-	void setSoundActive(bool a)
-	{
-		soundActive = a;
-	}
+	void setSoundActive(bool a);
 	
 	void update(float dt)
 	{

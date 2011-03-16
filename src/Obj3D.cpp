@@ -10,3 +10,10 @@
 #include "Obj3D.h"
 
 int Obj3D::objIDcounter = 0;
+
+void Obj3D::setSoundActive(bool a)
+{
+    soundActive = a;
+    
+    
+}

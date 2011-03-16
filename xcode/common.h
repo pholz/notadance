@@ -6,13 +6,12 @@
  *  Copyright 2011 __MyCompanyName__. All rights reserved.
  *
  */
+#pragma once
 
 #include <string>
 #include <map>
 #include "Obj3D.h"
-
-
-class VisPtr;
+#include "Visuals.h"
 
 typedef struct
 {

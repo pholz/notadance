@@ -23,10 +23,13 @@
 #include "OscManager.h"
 //#include "Obj3D.h"
 //#include "common.h"
+#include "Visuals.h"
+#include "Events.h"
 #include "World.h"
 #include "KinectImages.h"
 #include <queue>
 #include <map>
+#include "Resources.h"
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
 #define OSC_RECEIVE_PORT 3000
@@ -158,6 +161,8 @@ public:	// Members
 	map<string, int> objIDs;
 	map<string, ObjPtr> objectsMap;
     map<string, VisPtr> visualsMap;
+    
+    shared_ptr<Events> events;
 
 };
 
@@ -173,7 +178,8 @@ void SkelsApp::setup()
 	// init OpenNI stuff
 	// ---------------------------------------------------------------------------
 	_manager = V::OpenNIDeviceManager::InstancePtr();
-	_device0 = _manager->createDevice( "data/configIR.xml", true );
+    string fp = loadResource(RES_CONFIG)->getFilePath();
+	_device0 = _manager->createDevice(fp , true );
 	_device0->debugStr = &global_debug;
 	if( !_device0 ) 
 	{
@@ -249,15 +255,22 @@ void SkelsApp::setup()
 	// ---------------------------------------------------------------------------
 	
 	gameState.player = &center;
-
+    gameState.visualsMap = &visualsMap;
+    gameState.objectsMap = &objectsMap;
+    
 	
-	ObjPtr o(new Obj3D(1, Vec3f(1000.0f, 0, 1000.0f)));
+	ObjPtr o(new Obj3D(1, "l1_item1", Vec3f(1000.0f, 0, 1000.0f)));
+    o->setSoundActive(true);
+    oscManager->send("/skels/event/objon", o->objID, 1);
+    
 	world.addObject(o);
-	objectsMap["l1_item1"] = o;
+	objectsMap[o->name] = o;
 	
-	o.reset(new Obj3D(2, Vec3f(-900.0f, 0, -1400.0f)));
+	o.reset(new Obj3D(2, "l1_exit", Vec3f(-900.0f, 0, -1400.0f)));
+    o->setSoundActive(false);
+    oscManager->send("/skels/event/objon", o->objID, 0);
 	world.addObject(o);
-	objectsMap["l1_exit"] = o;
+	objectsMap[o->name] = o;
 	
 	o.reset(new Box3D(Vec3f(.0f, .0f, -1000.0f), Vec3f(5000.0f, 1000.0f, 200.0f)));
 	world.addObstacle(o);
@@ -271,6 +284,12 @@ void SkelsApp::setup()
 	world.addObstacle(o);
 	
 	kb_facing = Vec3f(.0f, .0f, -500.0f);
+    
+    // visuals
+    // ------
+    
+    VisPtr v(new VisualsItem1(1, "l1_vis_collect_item1"));
+    visualsMap[v->name] = v;
 	
 	
 	// state mgmt
@@ -281,6 +300,8 @@ void SkelsApp::setup()
 	
 	for(int i = 0; i < 26; i++)
 		keyOn[i] = false;
+    
+    events = shared_ptr<Events>(new Events(&gameState, oscManager));
 }
 
 void SkelsApp::enterState(AppState s)
@@ -476,6 +497,7 @@ void SkelsApp::update()
 	
 	//gameState.player = center;
 	world.update(gameState, dt);
+    
 	vector<ObjPos> objPositions = world.getPositions();
 	
 	vector<ObjPos>::iterator opit;
@@ -497,7 +519,8 @@ void SkelsApp::update()
 			if(op.distance < mParam_collectDistance)
 			{
 				oscManager->send("/skels/event/collect", op.obj->objID);
-				//events.event(op.obj, "EVENT_COLLECT");
+                
+				events->event(op.obj, "EVENT_COLLECT");
 				
 				toRemove = op.obj->objID;
 				
@@ -505,8 +528,6 @@ void SkelsApp::update()
 				{
 					enterState(SK_CLEARING_LEVEL);
 				}
-				
-				op.obj->setSoundActive(false);
 			}
 		}
 		
@@ -527,6 +548,17 @@ void SkelsApp::update()
 			//events.event(optr, "EVENT_HITOBSTACLE");
 		}
 	}
+    
+    
+    // update visuals
+    // -------
+    
+    map<string, VisPtr>::iterator visIt;
+    for(visIt = visualsMap.begin(); visIt != visualsMap.end(); visIt++)
+    {
+        VisPtr v = (*visIt).second;
+        v->update(dt);
+    }
 }
 
 void SkelsApp::renderBackground()
@@ -664,7 +696,18 @@ void SkelsApp::draw()
 		
 		if(state == SK_TRACKING)
 		{
+            // draw some text
 			gl::drawStringCentered("rescue the lost, and escape", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
+            
+            // draw visuals
+            // -----
+            map<string, VisPtr>::iterator visIt;
+            for(visIt = visualsMap.begin(); visIt != visualsMap.end(); visIt++)
+            {
+                VisPtr v = (*visIt).second;
+                v->draw();
+            }
+            
 		}
 		else
 		{

@@ -7,9 +7,12 @@
  *
  */
 
+#pragma once
+
 #include "OscListener.h"
 #include "OscSender.h"
 #include <string>
+#include <cstdarg>
 
 using namespace std;
 using namespace ci;
@@ -36,6 +39,18 @@ public:
 	{
 		osc::Message message;
 		message.addFloatArg(value);
+		message.setAddress(address);
+		message.setRemoteEndpoint(m_send_host, m_send_port);
+		sender.sendMessage(message);
+	}
+    
+    void send(string address, int a, int b)
+	{
+		osc::Message message;
+
+        message.addIntArg(a);
+        message.addIntArg(b);
+        
 		message.setAddress(address);
 		message.setRemoteEndpoint(m_send_host, m_send_port);
 		sender.sendMessage(message);
