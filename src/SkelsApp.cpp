@@ -30,6 +30,7 @@
 #include <queue>
 #include <map>
 #include "Resources.h"
+#include "cinder/Xml.h"
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
 #define OSC_RECEIVE_PORT 3000
@@ -163,6 +164,9 @@ public:	// Members
     map<string, VisPtr> visualsMap;
     
     shared_ptr<Events> events;
+    
+    // data
+    XmlTree xmlWorld;
 
 };
 
@@ -258,30 +262,40 @@ void SkelsApp::setup()
     gameState.visualsMap = &visualsMap;
     gameState.objectsMap = &objectsMap;
     
-	
-	ObjPtr o(new Obj3D(1, "l1_item1", Vec3f(1000.0f, 0, 1000.0f)));
-    o->setSoundActive(true);
-    oscManager->send("/skels/event/objon", o->objID, 1);
     
-	world.addObject(o);
-	objectsMap[o->name] = o;
-	
-	o.reset(new Obj3D(2, "l1_exit", Vec3f(-900.0f, 0, -1400.0f)));
-    o->setSoundActive(false);
-    oscManager->send("/skels/event/objon", o->objID, 0);
-	world.addObject(o);
-	objectsMap[o->name] = o;
-	
-	o.reset(new Box3D(Vec3f(.0f, .0f, -1000.0f), Vec3f(5000.0f, 1000.0f, 200.0f)));
-	world.addObstacle(o);
-	o.reset(new Box3D(Vec3f(.0f, .0f, -4000.0f), Vec3f(10000.0f, 1000.0f, 200.0f)));
-	world.addObstacle(o);
-	o.reset(new Box3D(Vec3f(.0f, .0f, 4000.0f), Vec3f(10000.0f, 1000.0f, 200.0f)));
-	world.addObstacle(o);
-	o.reset(new Box3D(Vec3f(-4000.0f, .0f, .0f), Vec3f(200.0f, 1000.0f, 10000.0f)));
-	world.addObstacle(o);
-	o.reset(new Box3D(Vec3f(4000.0f, .0f, .0f), Vec3f(200.0f, 1000.0f, 10000.0f)));
-	world.addObstacle(o);
+    xmlWorld = XmlTree( loadResource(RES_WORLD) );
+    
+    
+    XmlTree &xmlObjects = xmlWorld.getChild("objects");
+    
+    ObjPtr o;
+    for(XmlTree::ConstIter objxIt = xmlObjects.begin("object"); objxIt != xmlObjects.end(); objxIt++)
+    {
+        int xId = objxIt->getChild("id").getValue<int>();
+        string xName = objxIt->getChild("name").getValue();
+        float xX = objxIt->getChild("pos/x").getValue<float>();
+        float xZ = objxIt->getChild("pos/z").getValue<float>();
+        int xActive = objxIt->getChild("active").getValue<int>();
+        
+        o.reset(new Obj3D(xId, xName, Vec3f(xX, .0f, xZ)));
+        o->setSoundActive((bool) xActive);
+        oscManager->send("/skels/event/objon", o->objID, xActive);
+        world.addObject(o);
+        objectsMap[o->name] = o;
+    }
+    
+    XmlTree &xmlObstacles = xmlWorld.getChild("obstacles");
+    
+    for(XmlTree::ConstIter obstIt = xmlObstacles.begin("box"); obstIt != xmlObstacles.end(); obstIt++)
+    {
+        float xX = obstIt->getChild("pos/x").getValue<float>();
+        float xZ = obstIt->getChild("pos/z").getValue<float>();
+        float xdX = obstIt->getChild("dim/x").getValue<float>();
+        float xdZ = obstIt->getChild("dim/z").getValue<float>();
+        
+        o.reset(new Box3D(Vec3f(xX, .0f, xZ), Vec3f(xdX, 1000.0f, xdZ)));
+        world.addObstacle(o);
+    }
 	
 	kb_facing = Vec3f(.0f, .0f, -500.0f);
     
@@ -289,6 +303,9 @@ void SkelsApp::setup()
     // ------
     
     VisPtr v(new VisualsItem1(1, "l1_vis_collect_item1"));
+    visualsMap[v->name] = v;
+    
+    v.reset(new VisualsBump(2, "l1_vis_bump"));
     visualsMap[v->name] = v;
 	
 	
@@ -520,7 +537,7 @@ void SkelsApp::update()
 			{
 				oscManager->send("/skels/event/collect", op.obj->objID);
                 
-				events->event(op.obj, "EVENT_COLLECT");
+				events->event(op.obj->name, "EVENT_COLLECT");
 				
 				toRemove = op.obj->objID;
 				
@@ -545,6 +562,7 @@ void SkelsApp::update()
 		{
 			center.vel = Vec3f();
 			oscManager->send("/skels/event/obstacle", 1.0f);
+            events->event("obstacle","EVENT_BUMP");
 			//events.event(optr, "EVENT_HITOBSTACLE");
 		}
 	}
@@ -558,6 +576,9 @@ void SkelsApp::update()
     {
         VisPtr v = (*visIt).second;
         v->update(dt);
+        
+        if(v->expired > v->lifetime)
+            v->setActive(false);
     }
 }
 
@@ -691,13 +712,13 @@ void SkelsApp::draw()
 	else 
 	{
 		gl::setMatricesWindow( WIDTH, HEIGHT );
-		float brightness = random.nextFloat(.5f);
-		gl::clear( Color(brightness,brightness,brightness), true ); 
+		//float brightness = random.nextFloat(.5f);
+		//gl::clear( Color(brightness,brightness,brightness), true ); 
 		
-		if(state == SK_TRACKING)
+		if(state == SK_TRACKING || state == SK_KEYBOARD)
 		{
             // draw some text
-			gl::drawStringCentered("rescue the lost, and escape", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
+			//gl::drawStringCentered("rescue the lost, and escape", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
             
             // draw visuals
             // -----
@@ -705,7 +726,8 @@ void SkelsApp::draw()
             for(visIt = visualsMap.begin(); visIt != visualsMap.end(); visIt++)
             {
                 VisPtr v = (*visIt).second;
-                v->draw();
+                if(v->active)
+                    v->draw();
             }
             
 		}

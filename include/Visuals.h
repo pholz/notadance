@@ -10,6 +10,7 @@
 
 #include <string>
 #include "cinder/Cinder.h"
+#include "cinder/Rand.h"
 
 #define SAMPLE_WINDOW_SIZE 512
 
@@ -20,7 +21,7 @@ class Visuals
 {
 public:
 	Visuals(int _id, string _name);
-    void setActive(bool active);
+    virtual void setActive(bool active);
     virtual void init();
     
     virtual void update(float dt);
@@ -35,6 +36,8 @@ public:
     float waveform[SAMPLE_WINDOW_SIZE];
     
     float lifetime, expired;
+    
+    Rand rand;
 };
 
 typedef shared_ptr<Visuals> VisPtr;
@@ -42,7 +45,16 @@ typedef shared_ptr<Visuals> VisPtr;
 class VisualsItem1 : public Visuals
 {
 public:
-    VisualsItem1(int _id, string _name) : Visuals(_id, _name) {}
+    VisualsItem1(int _id, string _name) : Visuals(_id, _name) { init(); }
     void init();
     void draw();
+};
+
+class VisualsBump : public Visuals
+{
+public:
+    VisualsBump(int _id, string _name) : Visuals(_id, _name) { init(); }
+    void init();
+    void draw();
+    void setActive(bool active);
 };

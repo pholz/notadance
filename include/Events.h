@@ -59,7 +59,7 @@ class Events
 public:
     Events(GameState *gs, OscManager *mgr);
 	
-	void event(ObjPtr optr, string type);
+	void event(string name, string type);
 
 	map<Conditions, Actions, ConditionsComp> conditionsActions;
     GameState *gameState;

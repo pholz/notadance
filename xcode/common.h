@@ -13,6 +13,9 @@
 #include "Obj3D.h"
 #include "Visuals.h"
 
+#define GLOBAL_W 1024
+#define GLOBAL_H 768
+
 typedef struct
 {
 	Obj3D                   *player;

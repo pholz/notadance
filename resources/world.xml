@@ -1,0 +1,104 @@
+<objects>
+    <object>
+        <id>1</id>
+        <name>l1_item1</name>
+        <pos>
+            <x>1000</x>
+            <z>1000</z>
+        </pos>
+        <active>1</active>
+    </object>
+    <object>
+        <id>2</id>
+        <name>l1_exit</name>
+        <pos>
+            <x>-900</x>
+            <z>-1400</z>
+        </pos>
+        <active>0</active>
+    </object>
+</objects>
+    
+<obstacles>
+    
+    <box>
+        <pos>
+            <x>0</x>
+            <z>-1000</z>
+        </pos>
+        <dim>
+            <x>3000</x>
+            <z>200</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>0</x>
+            <z>-4000</z>
+        </pos>
+        <dim>
+            <x>10000</x>
+            <z>200</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>0</x>
+            <z>4000</z>
+        </pos>
+        <dim>
+            <x>10000</x>
+            <z>200</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>-4000</x>
+            <z>0</z>
+        </pos>
+        <dim>
+            <x>200</x>
+            <z>10000</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>4000</x>
+            <z>0</z>
+        </pos>
+        <dim>
+            <x>200</x>
+            <z>10000</z>
+        </dim>
+    </box>
+    
+</obstacles>
+    
+<events>
+    <event>
+        
+        <objectname>    l1_item1    </objectname>
+        <type>          EVENT_COLLECT </type>
+        
+        <nextobjects>
+            <objectname>l1_exit</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>l1_vis_collect_item1</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l1_item1</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+</events>

@@ -34,6 +34,7 @@
 		66674DA113048564004CFE8F /* OscMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9D13048564004CFE8F /* OscMessage.cpp */; };
 		66674DA213048564004CFE8F /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9E13048564004CFE8F /* OscSender.cpp */; };
 		666BD8C3133124EF004F29F5 /* configIR.xml in Resources */ = {isa = PBXBuildFile; fileRef = 666BD8C2133124EF004F29F5 /* configIR.xml */; };
+		666BD8DC13317873004F29F5 /* world.xml in Resources */ = {isa = PBXBuildFile; fileRef = 666BD8DB13317873004F29F5 /* world.xml */; };
 		667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */; };
 		6699B9A413283F4300B259FF /* Events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6699B9A313283F4300B259FF /* Events.cpp */; };
 		66E3B54D13076045003958D5 /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B54C13076045003958D5 /* World.cpp */; };
@@ -138,6 +139,7 @@
 		66674DF21304ADCD004CFE8F /* OscManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OscManager.h; path = ../include/OscManager.h; sourceTree = SOURCE_ROOT; };
 		666BD8C2133124EF004F29F5 /* configIR.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = configIR.xml; path = ../data/configIR.xml; sourceTree = "<group>"; };
 		666BD8DA13312737004F29F5 /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
+		666BD8DB13317873004F29F5 /* world.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = world.xml; path = ../resources/world.xml; sourceTree = "<group>"; };
 		667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Visuals.cpp; path = ../src/Visuals.cpp; sourceTree = "<group>"; };
 		6699B9A213283AF500B259FF /* Events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Events.h; path = ../include/Events.h; sourceTree = SOURCE_ROOT; };
 		6699B9A313283F4300B259FF /* Events.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Events.cpp; path = ../src/Events.cpp; sourceTree = SOURCE_ROOT; };
@@ -261,6 +263,7 @@
 				666BD8C2133124EF004F29F5 /* configIR.xml */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				00CCAF14116A9FEE008396D5 /* CinderApp.icns */,
+				666BD8DB13317873004F29F5 /* world.xml */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -492,6 +495,7 @@
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
 				66325E4E12FCEF3500E95797 /* README in Resources */,
 				666BD8C3133124EF004F29F5 /* configIR.xml in Resources */,
+				666BD8DC13317873004F29F5 /* world.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

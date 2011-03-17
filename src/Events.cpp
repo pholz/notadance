@@ -24,17 +24,22 @@ Events::Events(GameState *gs, OscManager *mgr)
     vector<string> deObj_1;
     deObj_1.push_back("l1_item1");
     
-    vector<string> deVis_1;
+    vector<string> empty;
     
-	conditionsActions[Conditions("l1_item1", "EVENT_COLLECT")] = Actions(nextObjs_1, nextVis_1, deObj_1, deVis_1);
+    vector<string> bumpVis;
+    bumpVis.push_back("l1_vis_bump");
+    
+	conditionsActions[Conditions("l1_item1", "EVENT_COLLECT")] = Actions(nextObjs_1, nextVis_1, deObj_1, empty);
+    
+    conditionsActions[Conditions("obstacle", "EVENT_BUMP")] = Actions(empty, bumpVis, empty, empty);
 }
 
-void Events::event(ObjPtr optr, string type)
+void Events::event(string name, string type)
 {
-    if(conditionsActions.find(Conditions(optr->name, type)) != conditionsActions.end())
+    if(conditionsActions.find(Conditions(name, type)) != conditionsActions.end())
     {
     
-        Actions a = conditionsActions[Conditions(optr->name, type)];
+        Actions a = conditionsActions[Conditions(name, type)];
 
         vector<string>::iterator it;
         for (it=a.nextObj.begin(); it != a.nextObj.end(); it++) 
