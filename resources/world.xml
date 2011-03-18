@@ -17,6 +17,36 @@
         </pos>
         <active>0</active>
     </object>
+    
+    <object>
+        <id>3</id>
+        <name>l2_item1</name>
+        <pos>
+            <x>500</x>
+            <z>200</z>
+        </pos>
+        <active>0</active>
+    </object>
+    
+    <object>
+        <id>4</id>
+        <name>l2_item2</name>
+        <pos>
+            <x>600</x>
+            <z>-1400</z>
+        </pos>
+        <active>0</active>
+    </object>
+    
+    <object>
+        <id>5</id>
+        <name>l2_exit</name>
+        <pos>
+            <x>1000</x>
+            <z>-1600</z>
+        </pos>
+        <active>0</active>
+    </object>
 </objects>
     
 <obstacles>
@@ -27,7 +57,7 @@
             <z>-1000</z>
         </pos>
         <dim>
-            <x>3000</x>
+            <x>1000</x>
             <z>200</z>
         </dim>
     </box>
@@ -81,8 +111,8 @@
 <events>
     <event>
         
-        <objectname>    l1_item1    </objectname>
-        <type>          EVENT_COLLECT </type>
+        <objectname>l1_item1</objectname>
+        <type>EVENT_COLLECT</type>
         
         <nextobjects>
             <objectname>l1_exit</objectname>
@@ -94,6 +124,90 @@
         
         <deactivateobjects>
             <objectname>l1_item1</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
+        <objectname>l1_exit</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+            <objectname>l2_item1</objectname>
+            <objectname>l2_item2</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>l1_vis_collect_exit</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l1_exit</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
+        <objectname>l2_item1</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l2_item1</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
+        <objectname>l2_item2</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+            <objectname>l2_exit</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l2_item2</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
+        <objectname>l2_exit</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l2_exit</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>

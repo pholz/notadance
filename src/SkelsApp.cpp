@@ -318,7 +318,7 @@ void SkelsApp::setup()
 	for(int i = 0; i < 26; i++)
 		keyOn[i] = false;
     
-    events = shared_ptr<Events>(new Events(&gameState, oscManager));
+    events = shared_ptr<Events>(new Events(&gameState, oscManager, &xmlWorld));
 }
 
 void SkelsApp::enterState(AppState s)

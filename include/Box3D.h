@@ -87,7 +87,7 @@ public:
 			
 		}
 		
-		Vec2f& q = xzPoly.getPoints()[0];
+		//Vec2f& q = xzPoly.getPoints()[0];
 		
 		//glVertex3f(q.x, 0.0f, q.y);
 		

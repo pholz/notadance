@@ -8,30 +8,47 @@
  */
 
 #include "Events.h"
+#include "Resources.h"
 
-Events::Events(GameState *gs, OscManager *mgr)
+
+Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
 {
     gameState = gs;
     oscManager = mgr;
     
-    // TODO: parse xml event structure here
-	vector<string> nextObjs_1;
-    nextObjs_1.push_back("l1_exit");
+    xmlWorld = tree;
     
-	vector<string> nextVis_1;
-    nextVis_1.push_back("l1_vis_collect_item1");
+    XmlTree &xmlEvents = xmlWorld->getChild("events");
     
-    vector<string> deObj_1;
-    deObj_1.push_back("l1_item1");
+    for(XmlTree::ConstIter it = xmlEvents.begin("event"); it != xmlEvents.end(); it++)
+    {
+        string xObjectname = it->getChild("objectname").getValue();
+        string xType = it->getChild("type").getValue();
+        
+        vector<string> vecNextObj;
+        const XmlTree &nextobjects = it->getChild("nextobjects");
+        for(XmlTree::ConstIter it2 = nextobjects.begin("objectname"); it2 != nextobjects.end(); it2++)
+            vecNextObj.push_back(it2->getValue());
+        
+        vector<string> vecNextVis;
+        const XmlTree &nextvisuals = it->getChild("nextvisuals");
+        for(XmlTree::ConstIter it2 = nextvisuals.begin("visualsname"); it2 != nextvisuals.end(); it2++)
+            vecNextVis.push_back(it2->getValue());
+        
+        vector<string> vecDeObj;
+        const XmlTree &deobjects = it->getChild("deactivateobjects");
+        for(XmlTree::ConstIter it2 = deobjects.begin("objectname"); it2 != deobjects.end(); it2++)
+            vecDeObj.push_back(it2->getValue());
+        
+        vector<string> vecDeVis;
+        const XmlTree &devisuals = it->getChild("deactivatevisuals");
+        for(XmlTree::ConstIter it2 = devisuals.begin("visualsname"); it2 != devisuals.end(); it2++)
+            vecDeVis.push_back(it2->getValue());
+        
+        
+        conditionsActions[Conditions(xObjectname, xType)] = Actions(vecNextObj, vecNextVis, vecDeObj, vecDeVis);
+    }
     
-    vector<string> empty;
-    
-    vector<string> bumpVis;
-    bumpVis.push_back("l1_vis_bump");
-    
-	conditionsActions[Conditions("l1_item1", "EVENT_COLLECT")] = Actions(nextObjs_1, nextVis_1, deObj_1, empty);
-    
-    conditionsActions[Conditions("obstacle", "EVENT_BUMP")] = Actions(empty, bumpVis, empty, empty);
 }
 
 void Events::event(string name, string type)
@@ -44,6 +61,9 @@ void Events::event(string name, string type)
         vector<string>::iterator it;
         for (it=a.nextObj.begin(); it != a.nextObj.end(); it++) 
         {
+            if(gameState->objectsMap->find(*it) == gameState->objectsMap->end())
+                continue;
+            
             ObjPtr o = (*(gameState->objectsMap))[*it];
             o->setSoundActive(true);
             oscManager->send("/skels/event/objon", o->objID, 1);
@@ -51,11 +71,17 @@ void Events::event(string name, string type)
         
         for (it=a.nextVisuals.begin(); it != a.nextVisuals.end(); it++) 
         {
+            if(gameState->visualsMap->find(*it) == gameState->visualsMap->end())
+                continue;
+            
             (*(gameState->visualsMap))[*it]->setActive(true);
         }
         
         for (it=a.deactivateObj.begin(); it != a.deactivateObj.end(); it++) 
         {
+            if(gameState->objectsMap->find(*it) == gameState->objectsMap->end())
+                continue;
+            
             ObjPtr o = (*(gameState->objectsMap))[*it];
             (*(gameState->objectsMap))[*it]->setSoundActive(false);
             oscManager->send("/skels/event/objon", o->objID, 0);
@@ -63,6 +89,9 @@ void Events::event(string name, string type)
         
         for (it=a.deactivateVisuals.begin(); it != a.deactivateVisuals.end(); it++) 
         {
+            if(gameState->visualsMap->find(*it) == gameState->visualsMap->end())
+                continue;
+            
             (*(gameState->visualsMap))[*it]->setActive(false);
         }
         

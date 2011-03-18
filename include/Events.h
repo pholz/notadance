@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include "OscManager.h"
+#include "cinder/Xml.h"
 
 using namespace ci;
 using namespace std;
@@ -57,11 +58,12 @@ struct ConditionsComp {
 class Events
 {
 public:
-    Events(GameState *gs, OscManager *mgr);
+    Events(GameState *gs, OscManager *mgr, XmlTree *tree);
 	
 	void event(string name, string type);
 
 	map<Conditions, Actions, ConditionsComp> conditionsActions;
     GameState *gameState;
     OscManager* oscManager;
+    XmlTree *xmlWorld;
 };
