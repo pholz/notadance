@@ -10,6 +10,7 @@
 #include "fmod_errors.h"
 #include <string>
 #include "cinder/Cinder.h"
+#include "cinder/Vector.h"
 
 using namespace std;
 using namespace ci;
