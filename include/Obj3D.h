@@ -8,6 +8,7 @@
  */
 #pragma once
 #include "cinder/Vector.h"
+#include "Sounds.h"
 
 using namespace ci;
 using namespace std;
@@ -62,11 +63,31 @@ public:
 	}
 	
 	void setSoundActive(bool a);
+    
+    void setSound(Sound *_sound)
+    {
+        sound = _sound;
+        hasSound = true;
+    }
+    
+    void removeSound()
+    {
+        hasSound = false;
+    }
 	
 	void update(float dt)
 	{
 		pos += vel * dt;
 		vel += acc * dt;
+        
+        if(hasSound)
+        {
+            FMOD_VECTOR pos = { pos.x * DISTANCEFACTOR, pos.y * DISTANCEFACTOR, pos.z * DISTANCEFACTOR };
+            
+            FMOD_VECTOR vel = { vel.x * DISTANCEFACTOR, vel.y * DISTANCEFACTOR, vel.z * DISTANCEFACTOR };
+            
+            sound->channel->set3DAttributes(&pos, &vel);
+        }
 	}
 	
 	virtual bool collideXZ(Vec3f _pos, Vec3f _vel)
@@ -85,6 +106,8 @@ public:
 	static int objIDcounter;
 	string name;
 	bool soundActive;
+    Sound *sound;
+    bool hasSound;
 	
 };
 

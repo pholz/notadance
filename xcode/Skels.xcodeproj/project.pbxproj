@@ -28,6 +28,8 @@
 		66325E7A12FCEF3500E95797 /* VOpenNIDeviceManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3212FCEF3500E95797 /* VOpenNIDeviceManager.cpp */; };
 		66325E7B12FCEF3500E95797 /* VOpenNIUser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */; };
 		66325E8E12FDF81700E95797 /* SkelsApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E8D12FDF81700E95797 /* SkelsApp.cpp */; };
+		66580572133412630022435A /* Sounds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66580570133412630022435A /* Sounds.cpp */; };
+		66580578133417E10022435A /* libfmodex.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66580577133417E10022435A /* libfmodex.dylib */; settings = {ATTRIBUTES = (Required, ); }; };
 		66618E67131EA9C100CDEACF /* Box3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66618E66131EA9C100CDEACF /* Box3D.cpp */; };
 		66674D9F13048564004CFE8F /* OscBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9B13048564004CFE8F /* OscBundle.cpp */; };
 		66674DA013048564004CFE8F /* OscListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9C13048564004CFE8F /* OscListener.cpp */; };
@@ -128,6 +130,9 @@
 		66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VOpenNIUser.cpp; sourceTree = "<group>"; };
 		66325E8C12FDF81200E95797 /* Skels_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skels_Prefix.pch; sourceTree = "<group>"; };
 		66325E8D12FDF81700E95797 /* SkelsApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkelsApp.cpp; path = ../src/SkelsApp.cpp; sourceTree = SOURCE_ROOT; };
+		66580570133412630022435A /* Sounds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Sounds.cpp; path = ../src/Sounds.cpp; sourceTree = "<group>"; };
+		66580573133412970022435A /* Sounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sounds.h; path = ../include/Sounds.h; sourceTree = "<group>"; };
+		66580577133417E10022435A /* libfmodex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libfmodex.dylib; sourceTree = "<group>"; };
 		66618E66131EA9C100CDEACF /* Box3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Box3D.cpp; path = ../src/Box3D.cpp; sourceTree = SOURCE_ROOT; };
 		66618E68131EA9D200CDEACF /* Box3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Box3D.h; path = ../include/Box3D.h; sourceTree = SOURCE_ROOT; };
 		66674D9B13048564004CFE8F /* OscBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscBundle.cpp; path = ../../../../osc/src/OscBundle.cpp; sourceTree = SOURCE_ROOT; };
@@ -171,6 +176,7 @@
 				66325E4912FCEF3500E95797 /* libOpenNI.dylib in Frameworks */,
 				66325E4B12FCEF3500E95797 /* NiSampleModule.lib in Frameworks */,
 				66325E4D12FCEF3500E95797 /* openNI.lib in Frameworks */,
+				66580578133417E10022435A /* libfmodex.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,6 +192,7 @@
 				66E3B59713077473003958D5 /* Obj3D.cpp */,
 				6699B9A313283F4300B259FF /* Events.cpp */,
 				667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */,
+				66580570133412630022435A /* Sounds.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -228,6 +235,7 @@
 		29B97314FDCFA39411CA2CEA /* BlockOpenNISkeleton */ = {
 			isa = PBXGroup;
 			children = (
+				66580576133417E10022435A /* lib */,
 				66674D9913048559004CFE8F /* OSC */,
 				66325D7A12FCEF3500E95797 /* BlockOpenNI */,
 				29B97315FDCFA39411CA2CEA /* Headers */,
@@ -242,6 +250,7 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				66580573133412970022435A /* Sounds.h */,
 				66E3B5521307645A003958D5 /* common.h */,
 				66E3B54B1307603C003958D5 /* World.h */,
 				66674DF11304ADCD004CFE8F /* Obj3D.h */,
@@ -434,6 +443,15 @@
 			path = src;
 			sourceTree = "<group>";
 		};
+		66580576133417E10022435A /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				66580577133417E10022435A /* libfmodex.dylib */,
+			);
+			name = lib;
+			path = ../lib;
+			sourceTree = "<group>";
+		};
 		66674D9913048559004CFE8F /* OSC */ = {
 			isa = PBXGroup;
 			children = (
@@ -455,6 +473,7 @@
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
+				6658057913341AA20022435A /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -501,6 +520,22 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		6658057913341AA20022435A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -f ../lib/libfmodex.dylib \"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/libfmodex.dylib\"\ninstall_name_tool -change ./libfmodex.dylib @executable_path/libfmodex.dylib \"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/MacOS/$PRODUCT_NAME\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		8D11072C0486CEB800E47090 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -522,6 +557,7 @@
 				66618E67131EA9C100CDEACF /* Box3D.cpp in Sources */,
 				6699B9A413283F4300B259FF /* Events.cpp in Sources */,
 				667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */,
+				66580572133412630022435A /* Sounds.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -531,6 +567,7 @@
 		C01FCF4B08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -546,12 +583,16 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../../../lib/macosx\"",
 					"\"$(SRCROOT)/../../../lib/msw\"",
+					/Users/holz/apps/fmod/lib,
+					"\"$(DEVELOPER_DIR)-old/FMOD Programmers API Mac/api/lib\"",
+					"\"$(SRCROOT)/../lib\"",
 				);
 				OTHER_LDFLAGS = (
 					"\"$(CINDER_PATH)/blocks/osc/lib/macosx/osc.a\"",
 					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
 				);
 				PRODUCT_NAME = Skels;
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/blocks/osc/include\" \"$(CINDER_PATH)/include\" ../include /Users/holz/apps/fmod/inc";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -559,6 +600,7 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_FAST_MATH = YES;
@@ -575,6 +617,9 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../../../lib/macosx\"",
 					"\"$(SRCROOT)/../../../lib/msw\"",
+					/Users/holz/apps/fmod/lib,
+					"\"$(DEVELOPER_DIR)-old/FMOD Programmers API Mac/api/lib\"",
+					"\"$(SRCROOT)/../lib\"",
 				);
 				OTHER_LDFLAGS = (
 					"\"$(CINDER_PATH)/lib/libcinder.a\"",

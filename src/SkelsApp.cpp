@@ -31,11 +31,16 @@
 #include <map>
 #include "Resources.h"
 #include "cinder/Xml.h"
+#include "Sounds.h"
+
+
+
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
 #define OSC_RECEIVE_PORT 3000
 #define DEBUGMODE true
 #define OBJ_ID_EXIT 6
+#define SOUND_ON 1
 
 using namespace ci;
 using namespace ci::app;
@@ -167,6 +172,10 @@ public:	// Members
     
     // data
     XmlTree xmlWorld;
+    
+    // FMOD
+    
+    Sounds sounds;
 
 };
 
