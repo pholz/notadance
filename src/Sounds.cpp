@@ -8,25 +8,39 @@
 
 #include "Sounds.h"
 
+FMOD_VECTOR fmodvector (Vec3f v, float scale)
+{
+    FMOD_VECTOR f;
+    f.x = v.x * scale;
+    f.y = v.y * scale;
+    f.z = v.z * scale;
+    
+    return f;
+}
+
 Sounds::Sounds()
 {
     init();
 }
 
-void Sounds::updateListener(Vec3f pos, Vec3f vel)
+void Sounds::updateListener(Vec3f pos, Vec3f vel, Vec3f fwd, Vec3f up)
 {
-    listenerpos.x = pos.x * DISTANCEFACTOR;
-    listenerpos.y = pos.y * DISTANCEFACTOR;
-    listenerpos.z = pos.z * DISTANCEFACTOR;
+    listenerpos = fmodvector(pos * 0.01f);
     
+    FMOD_VECTOR fvel = fmodvector(vel * 0.01f);
+    FMOD_VECTOR ffwd = fmodvector(-fwd, 1.0f);
+    FMOD_VECTOR fup = fmodvector(up, 1.0f);
     
+    FMOD_RESULT result;
+    result = system->set3DListenerAttributes(0, &listenerpos, &fvel, &ffwd, &fup);
     
+    int x = 0;
+
 }
 
 void Sounds::init()
 {
     channel1 = channel2 = channel3 = 0;
-    DISTANCEFACTOR = 1.0f;
     
     listenerpos.x = .0f;
     listenerpos.y = .0f;
@@ -99,9 +113,11 @@ Sound::Sound(FMOD::System *_system, string file, bool play)
 
 void Sound::init(bool play)
 {
-    sound->setMode(FMOD_LOOP_NORMAL);
-    system->playSound(FMOD_CHANNEL_FREE, sound, true, &channel);
+    FMOD_RESULT result;
+    result = sound->set3DMinMaxDistance(0.5f * DISTANCEFACTOR, 5000.0f * DISTANCEFACTOR);
+    result = sound->setMode(FMOD_LOOP_NORMAL);
+    result = system->playSound(FMOD_CHANNEL_FREE, sound, true, &channel);
     
     if(play)
-        channel->setPaused(false);
+        result = channel->setPaused(false);
 }

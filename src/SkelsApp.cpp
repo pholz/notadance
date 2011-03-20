@@ -328,6 +328,11 @@ void SkelsApp::setup()
 		keyOn[i] = false;
     
     events = shared_ptr<Events>(new Events(&gameState, oscManager, &xmlWorld));
+    
+    
+   // SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
+    
+   // objectsMap["l1_item1"]->setSound(s);
 }
 
 void SkelsApp::enterState(AppState s)
@@ -385,7 +390,7 @@ void SkelsApp::update()
 		kb_shoulders.rotateY(-M_PI_2);
 		shoulders = Vec3f(kb_shoulders);
 		
-		center.vel = Vec3f();
+		center.vel = Vec3f(.0f, .0f, .0f);
 		if(keyOn['w'-'a']) center.vel += kb_facing;
 		if(keyOn['s'-'a']) center.vel -= kb_facing;
 		if(keyOn['a'-'a']) kb_facing.rotateY(-M_PI * dt);
@@ -508,6 +513,13 @@ void SkelsApp::update()
 	shoulders_norm = shoulders.normalized();
 	shoulders_norm.rotateY(M_PI_2);
 	shoulders_norm.normalize();
+    
+    
+    // SOUNDS
+    
+  //  sounds.updateListener(center.pos, center.vel, shoulders_norm, Vec3f(.0f, 1.0f, .0f));
+    
+ //   sounds.system->update();
 
 	
 	// send OSC updates to Max

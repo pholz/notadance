@@ -60,11 +60,12 @@ public:
 	void init()
 	{
 		soundActive = false;
+        hasSound = false;
 	}
 	
 	void setSoundActive(bool a);
     
-    void setSound(Sound *_sound)
+    void setSound(SndPtr _sound)
     {
         sound = _sound;
         hasSound = true;
@@ -82,11 +83,13 @@ public:
         
         if(hasSound)
         {
-            FMOD_VECTOR pos = { pos.x * DISTANCEFACTOR, pos.y * DISTANCEFACTOR, pos.z * DISTANCEFACTOR };
+            FMOD_VECTOR fpos = fmodvector(pos * .01f);
             
-            FMOD_VECTOR vel = { vel.x * DISTANCEFACTOR, vel.y * DISTANCEFACTOR, vel.z * DISTANCEFACTOR };
+            FMOD_VECTOR fvel = fmodvector(vel * .01f);
             
-            sound->channel->set3DAttributes(&pos, &vel);
+            FMOD_RESULT result = sound->channel->set3DAttributes(&fpos, &fvel);
+            
+            int x = 0;
         }
 	}
 	
@@ -106,7 +109,7 @@ public:
 	static int objIDcounter;
 	string name;
 	bool soundActive;
-    Sound *sound;
+    SndPtr sound;
     bool hasSound;
 	
 };

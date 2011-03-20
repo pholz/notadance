@@ -12,17 +12,20 @@
 #include "cinder/Cinder.h"
 #include "cinder/Vector.h"
 
+#define DISTANCEFACTOR 1.0f
+
 using namespace std;
 using namespace ci;
+
+FMOD_VECTOR fmodvector(Vec3f v, float f = DISTANCEFACTOR);
 
 class Sounds
 {
 public:
     Sounds();
     void init();
-    void updateListener(Vec3f pos, Vec3f vel);
+    void updateListener(Vec3f pos, Vec3f vel, Vec3f fwd, Vec3f up);
     
-    float DISTANCEFACTOR;
     FMOD::System    *system;
     FMOD::Sound     *sound1, *sound2, *sound3;
     FMOD::Channel   *channel1, *channel2, *channel3;
@@ -49,3 +52,5 @@ public:
     
 
 };
+
+typedef shared_ptr<Sound> SndPtr;
