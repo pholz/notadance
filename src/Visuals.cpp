@@ -9,6 +9,7 @@
 #include "common.h"
 #include "Visuals.h"
 #include "cinder/gl/gl.h"
+#include "cinder/Camera.h"
 
 
 Visuals::Visuals(int _id, string _name) : visID(_id), name(_name)
@@ -41,18 +42,30 @@ void Visuals::setActive(bool _active)
 
 void VisualsItem1::init()
 {
+    lifetime = 100000.0f;
 }
 
 void VisualsItem1::draw()
 {
 	gl::color(Color(1, 1, 1));
     
-    glBegin(GL_LINE_STRIP);
+    gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
+    CameraPersp cam( GLOBAL_W, GLOBAL_H, 50, 0.1, 10000 );
+    cam.lookAt(Vec3f(.0f,  50.0f, 150.0f), Vec3f(.0f, .0f, .0f));
+    gl::setMatrices(cam);
+    
+    glBegin(GL_TRIANGLE_STRIP);
     
     for(int i = 0; i < SAMPLE_WINDOW_SIZE; i++)
-        glVertex2f(i*2, 300.0f - math<float>::log(spectrum[i])*10.0f);
+    {
+        glVertex3f(math<float>::cos(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40, 
+                   math<float>::log(spectrum[i])*10.0f + 30.0f, 
+                   math<float>::sin(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40);
+    }
     
     glEnd();
+    
+    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
 }
 
 void VisualsBump::init()

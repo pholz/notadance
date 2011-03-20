@@ -8,11 +8,10 @@
  */
 #pragma once
 
+#include "constants.h"
 #include <string>
 #include "cinder/Cinder.h"
 #include "cinder/Rand.h"
-
-#define SAMPLE_WINDOW_SIZE 512
 
 using namespace std;
 using namespace ci;

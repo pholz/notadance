@@ -9,10 +9,15 @@
 
 #pragma once
 
+#include "constants.h"
+#include "common.h"
 #include "OscListener.h"
 #include "OscSender.h"
 #include <string>
 #include <cstdarg>
+
+#define TYPE_SPECTRUM 0
+#define TYPE_WAVEFORM 1
 
 using namespace std;
 using namespace ci;
@@ -25,14 +30,18 @@ public:
 	osc::Sender sender;
 	string m_send_host;
 	int m_send_port, m_receive_port;
+    float spectrum[SAMPLE_WINDOW_SIZE];
+    float waveform[SAMPLE_WINDOW_SIZE];
+    GameState *gs;
 	
-	OscManager(string send_host, int send_port, int receive_port)
+	OscManager(string send_host, int send_port, int receive_port, GameState *_gs)
 	{
 		m_send_host = send_host;
 		m_send_port = send_port;
 		m_receive_port = receive_port;
 		sender.setup(send_host, send_port);
 		listener.setup(receive_port);
+        gs = _gs;
 	}
 	
 	void send(string address, float value)
@@ -64,5 +73,63 @@ public:
 		message.setRemoteEndpoint(m_send_host, m_send_port);
 		sender.sendMessage(message);
 	}
+    
+    void receive()
+    {
+        while (listener.hasWaitingMessages()) {
+            osc::Message message;
+            listener.getNextMessage(&message);
+
+            
+            string addr = message.getAddress();
+            int type = 0;
+            if(addr.find("spectrum") != string::npos)
+                type = TYPE_SPECTRUM;
+            else
+                type = TYPE_WAVEFORM;
+            
+            string starget = "";
+            
+            for (int i = 0; i < message.getNumArgs(); i++) 
+            {
+                if (message.getArgType(i) == osc::TYPE_FLOAT)
+                {
+                    try {
+
+                        if(type == TYPE_SPECTRUM)
+                            spectrum[i] = message.getArgAsFloat(i);
+                        if(type == TYPE_WAVEFORM)
+                            waveform[i] = message.getArgAsFloat(i);
+                    }
+                    catch (...) {
+
+                    }
+
+                }
+                else if (message.getArgType(i) == osc::TYPE_STRING)
+                {
+                    try {
+                        starget = message.getArgAsString(i);
+                        
+                    }
+                    catch (...) {
+                    }
+                    
+                }
+            }
+            
+            if(gs->visualsMap->find(starget) != gs->visualsMap->end())
+            {
+                if(type == TYPE_SPECTRUM)
+                    memcpy( (*(gs->visualsMap))[starget]->spectrum, spectrum, SAMPLE_WINDOW_SIZE * sizeof(float) );
+                else
+                    memcpy( (*(gs->visualsMap))[starget]->waveform, waveform, SAMPLE_WINDOW_SIZE * sizeof(float) );
+            }
+            
+            
+            
+            
+        }
+    }
 	
 };

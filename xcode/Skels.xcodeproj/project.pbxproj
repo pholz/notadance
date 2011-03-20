@@ -133,6 +133,7 @@
 		66580570133412630022435A /* Sounds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Sounds.cpp; path = ../src/Sounds.cpp; sourceTree = "<group>"; };
 		66580573133412970022435A /* Sounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sounds.h; path = ../include/Sounds.h; sourceTree = "<group>"; };
 		66580577133417E10022435A /* libfmodex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libfmodex.dylib; sourceTree = "<group>"; };
+		6658063013359C3A0022435A /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../include/constants.h; sourceTree = "<group>"; };
 		66618E66131EA9C100CDEACF /* Box3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Box3D.cpp; path = ../src/Box3D.cpp; sourceTree = SOURCE_ROOT; };
 		66618E68131EA9D200CDEACF /* Box3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Box3D.h; path = ../include/Box3D.h; sourceTree = SOURCE_ROOT; };
 		66674D9B13048564004CFE8F /* OscBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OscBundle.cpp; path = ../../../../osc/src/OscBundle.cpp; sourceTree = SOURCE_ROOT; };
@@ -262,6 +263,7 @@
 				6699B9A213283AF500B259FF /* Events.h */,
 				6699B9A513284C2300B259FF /* Visuals.h */,
 				666BD8DA13312737004F29F5 /* Resources.h */,
+				6658063013359C3A0022435A /* constants.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";

@@ -260,8 +260,7 @@ void SkelsApp::setup()
 	
 	// init osc manager
 	// ---------------------------------------------------------------------------
-	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT);
-	
+	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT, &gameState);
 	
 	
 	// world
@@ -311,8 +310,9 @@ void SkelsApp::setup()
     // visuals
     // ------
     
-    VisPtr v(new VisualsItem1(1, "l1_vis_collect_item1"));
+    VisPtr v(new VisualsItem1(1, "l1_vis_item1"));
     visualsMap[v->name] = v;
+    v->setActive(true);
     
     v.reset(new VisualsBump(2, "l1_vis_bump"));
     visualsMap[v->name] = v;
@@ -369,6 +369,8 @@ void SkelsApp::update()
 	float now = getElapsedSeconds();
 	float dt = now - lastUpdate;
 	lastUpdate = now;
+    
+    oscManager->receive();
 	
 	
 	gl::setMatricesWindow( 640, 480 );

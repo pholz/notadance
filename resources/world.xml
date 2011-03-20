@@ -119,7 +119,7 @@
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>l1_vis_collect_item1</visualsname>
+
         </nextvisuals>
         
         <deactivateobjects>
@@ -127,6 +127,7 @@
         </deactivateobjects>
         
         <deactivatevisuals>
+            <visualsname>l1_vis_item1</visualsname>
         </deactivatevisuals>
         
     </event>
