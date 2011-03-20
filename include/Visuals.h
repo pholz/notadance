@@ -57,3 +57,12 @@ public:
     void draw();
     void setActive(bool active);
 };
+
+class VisualsExpire : public Visuals
+{
+public:
+    VisualsExpire(int _id, string _name) : Visuals(_id, _name) { init(); }
+    void init();
+    void draw();
+    void setActive(bool active);
+};

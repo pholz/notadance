@@ -285,8 +285,12 @@ void SkelsApp::setup()
         float xZ = objxIt->getChild("pos/z").getValue<float>();
         int xActive = objxIt->getChild("active").getValue<int>();
         
+        
+        float xLt = objxIt->hasChild("lifetime") ? objxIt->getChild("lifetime").getValue<float>() : .0f;
+        
         o.reset(new Obj3D(xId, xName, Vec3f(xX, .0f, xZ)));
         o->setSoundActive((bool) xActive);
+        if(xLt != .0f) o->setLifetime(xLt);
         oscManager->send("/skels/event/objon", o->objID, xActive);
         world.addObject(o);
         objectsMap[o->name] = o;
@@ -315,6 +319,9 @@ void SkelsApp::setup()
     v->setActive(true);
     
     v.reset(new VisualsBump(2, "l1_vis_bump"));
+    visualsMap[v->name] = v;
+    
+    v.reset(new VisualsExpire(3, "vis_expire"));
     visualsMap[v->name] = v;
 	
 	
@@ -569,6 +576,14 @@ void SkelsApp::update()
 					enterState(SK_CLEARING_LEVEL);
 				}
 			}
+            
+            // expiration
+            if(op.obj->isExpired())
+            {
+                oscManager->send("/skels/event/expire", op.obj->objID);
+                
+				events->event(op.obj->name, "EVENT_EXPIRE");
+            }
 		}
 		
 		
@@ -709,7 +724,7 @@ void SkelsApp::draw()
 
 		
 		gl::setMatricesWindow( WIDTH, HEIGHT );
-/*
+
 		float sx = 320/2;
 		float sy = 240/2;
 		float xoff = 10;
@@ -720,7 +735,7 @@ void SkelsApp::draw()
 		gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
 		gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
 		glDisable( GL_TEXTURE_2D );
-		*/
+		
 		
 		// debug params
 		// ---------------------------------------------------------------------------

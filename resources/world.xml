@@ -7,6 +7,7 @@
             <z>1000</z>
         </pos>
         <active>1</active>
+        <lifetime>10</lifetime>
     </object>
     <object>
         <id>2</id>
@@ -120,6 +121,29 @@
         
         <nextvisuals>
 
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>l1_item1</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+            <visualsname>l1_vis_item1</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
+        <objectname>l1_item1</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+            <objectname>l1_exit</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_expire</visualsname>
         </nextvisuals>
         
         <deactivateobjects>

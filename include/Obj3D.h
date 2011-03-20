@@ -61,7 +61,26 @@ public:
 	{
 		soundActive = false;
         hasSound = false;
+        doesExpire = false;
+        expired = lifetime = .0f;
 	}
+    
+    void setLifetime(float lt)
+    {
+        lifetime = lt;
+        
+        if(lt != .0f)
+            doesExpire = true;
+        else
+            doesExpire = false;
+    }
+    
+    bool isExpired()
+    {
+        if(doesExpire && expired >= lifetime)
+            return true;
+        else return false;
+    }
 	
 	void setSoundActive(bool a);
     
@@ -81,6 +100,8 @@ public:
 		pos += vel * dt;
 		vel += acc * dt;
         
+        expired += dt;
+        
         if(hasSound)
         {
             FMOD_VECTOR fpos = fmodvector(pos * .01f);
@@ -88,8 +109,6 @@ public:
             FMOD_VECTOR fvel = fmodvector(vel * .01f);
             
             FMOD_RESULT result = sound->channel->set3DAttributes(&fpos, &fvel);
-            
-            int x = 0;
         }
 	}
 	
@@ -104,13 +123,14 @@ public:
 	}
 	
 	
-	Vec3f pos, vel, acc;
-	int objID;
-	static int objIDcounter;
-	string name;
-	bool soundActive;
-    SndPtr sound;
-    bool hasSound;
+	Vec3f           pos, vel, acc;
+	int             objID;
+	static int      objIDcounter;
+	string          name;
+	bool            soundActive;
+    SndPtr          sound;
+    bool            hasSound, doesExpire;
+    float           lifetime, expired;
 	
 };
 

@@ -93,3 +93,38 @@ void VisualsBump::setActive(bool _active)
     if(active)
         expired = 0;
 }
+
+void VisualsExpire::init()
+{
+    lifetime = 6.0f;
+}
+
+void VisualsExpire::draw()
+{
+	gl::color(Color(1, 0, 0));
+    
+    gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
+    CameraPersp cam( GLOBAL_W, GLOBAL_H, 50, 0.1, 10000 );
+    cam.lookAt(Vec3f(.0f,  40.0f, 120.0f), Vec3f(.0f, .0f, .0f));
+    gl::setMatrices(cam);
+    
+    glBegin(GL_TRIANGLE_STRIP);
+    
+    for(int i = 0; i < SAMPLE_WINDOW_SIZE; i++)
+    {
+        glVertex3f(math<float>::cos(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40, 
+                   math<float>::log(spectrum[i])*10.0f + 30.0f, 
+                   math<float>::sin(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40);
+    }
+    
+    glEnd();
+    
+    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
+}
+
+void VisualsExpire::setActive(bool _active)
+{
+    active = _active;
+    if(active)
+        expired = 0;
+}
