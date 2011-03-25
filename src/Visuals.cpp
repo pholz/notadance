@@ -11,6 +11,8 @@
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
 #include "cinder/ImageIo.h"
+#include "cinder/CinderResources.h"
+#include "Resources.h"
 
 Visuals::Visuals(int _id, string _name) : visID(_id), name(_name)
 {
@@ -136,6 +138,10 @@ void VisualsCollect::init(app::App* app)
     textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic1.png") ) ));
     textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic2.png") ) ));
     textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic3.png") ) ));
+    
+    memShader = gl::GlslProg(app->loadResource( RES_PASS_VERT ),
+                             app->loadResource( RES_MEM_FRAG ));
+    
 }
 
 void VisualsCollect::draw()
@@ -143,9 +149,18 @@ void VisualsCollect::draw()
 	gl::color(Color(1, 1, 1));
     
     gl::setMatricesWindow( GLOBAL_W, GLOBAL_H );
+    
+    gl::Texture &tex = textures[ (int) ( (expired/lifetime)* (float) textures.size() ) % 3 ];
+    
+    tex.bind(0);
+    
+    
+    memShader.bind();
+    memShader.uniform("tex0", 0);
+    memShader.uniform("relativeTime", expired/lifetime);
+    memShader.uniform("rand", rand.nextFloat());
 
-    gl::draw(textures[ (int) ( (expired/lifetime)* (float) textures.size() ) % 3 ], 
-             Rectf(0, 0, GLOBAL_W, GLOBAL_H));
+    gl::draw(tex, Rectf(-rand.nextFloat()*50.0f, -rand.nextFloat()*50.0f, GLOBAL_W*1.5f, GLOBAL_H*1.5f));
     
     
 }

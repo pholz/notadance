@@ -13,7 +13,9 @@
 #include "cinder/Cinder.h"
 #include "cinder/Rand.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/gl/GlslProg.h"
 #include "cinder/app/App.h"
+#include "cinder/Rand.h"
 
 using namespace std;
 using namespace ci;
@@ -78,4 +80,6 @@ public:
     void setActive(bool active);
     
     vector<gl::Texture> textures;
+    gl::GlslProg memShader;
+    Rand rand;
 };
