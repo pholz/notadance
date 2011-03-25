@@ -9,6 +9,7 @@
 
 #include "Events.h"
 #include "Resources.h"
+#include <iostream>
 
 
 Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
@@ -20,6 +21,7 @@ Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
     
     XmlTree &xmlEvents = xmlWorld->getChild("events");
     
+    int iter = 0;
     for(XmlTree::ConstIter it = xmlEvents.begin("event"); it != xmlEvents.end(); it++)
     {
         string xObjectname = it->getChild("objectname").getValue();
@@ -46,8 +48,36 @@ Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
             vecDeVis.push_back(it2->getValue());
         
         
-        conditionsActions[Conditions(xObjectname, xType)] = Actions(vecNextObj, vecNextVis, vecDeObj, vecDeVis);
+        Conditions c(xObjectname, xType);
+        cout << "adding " << xObjectname << "|" << xType << endl;
+        cout << iter << endl << " __________ " << endl;
+        conditionsActions[c] = Actions(vecNextObj, vecNextVis, vecDeObj, vecDeVis);
+        
+        map<Conditions, Actions>::iterator cait;
+        for(cait = conditionsActions.begin(); cait != conditionsActions.end(); cait++)
+        {
+            cout << cait->first.obj << " / " << cait->first.event << " -> " << endl;
+            
+            vector<string>::iterator sit;
+            for(sit = cait->second.nextObj.begin(); sit != cait->second.nextObj.end(); sit++)
+                cout << *sit << ", ";
+            cout << endl;
+            
+            for(sit = cait->second.nextVisuals.begin(); sit != cait->second.nextVisuals.end(); sit++)
+                cout << *sit << ", ";
+            cout << endl;
+            
+            for(sit = cait->second.deactivateObj.begin(); sit != cait->second.deactivateObj.end(); sit++)
+                cout << *sit << ", ";
+            cout << endl;
+            
+            for(sit = cait->second.deactivateVisuals.begin(); sit != cait->second.deactivateVisuals.end(); sit++)
+                cout << *sit << ", ";
+            cout << endl;
+        }
     }
+    
+    
     
 }
 

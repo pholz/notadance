@@ -21,14 +21,13 @@
 #include "VOpenNIHeaders.h"
 #include <sstream>
 #include "OscManager.h"
-//#include "Obj3D.h"
-//#include "common.h"
 #include "Visuals.h"
 #include "Events.h"
 #include "World.h"
 #include "KinectImages.h"
 #include <queue>
 #include <map>
+#include <unistd.h>
 #include "Resources.h"
 #include "cinder/Xml.h"
 #include "Sounds.h"
@@ -41,6 +40,8 @@
 #define DEBUGMODE true
 #define OBJ_ID_EXIT 6
 #define SOUND_ON 1
+
+#define NULLVEC Vec3f(.0f, .0f, .0f)
 
 using namespace ci;
 using namespace ci::app;
@@ -175,7 +176,11 @@ public:	// Members
     
     // FMOD
     
-    Sounds sounds;
+   // Sounds sounds;
+    
+    
+    // SETTINGS
+    bool setting_useKinect;
 
 };
 
@@ -186,27 +191,41 @@ void SkelsApp::prepareSettings(Settings* settings)
 
 void SkelsApp::setup()
 {
-	gl::setMatricesWindow( 640, 480 );
+
+    setting_useKinect = true;
+    
+    // get cmd line args and set settings
+    // ------------
+    vector<string> args = getArgs();
+    vector<string>::iterator argsIt;
+    for(argsIt = args.begin(); argsIt < args.end(); argsIt++)
+    {
+        if(!argsIt->compare("NOKINECT"))
+            setting_useKinect = false;
+    }
 	
 	// init OpenNI stuff
 	// ---------------------------------------------------------------------------
-	_manager = V::OpenNIDeviceManager::InstancePtr();
-    string fp = loadResource(RES_CONFIG)->getFilePath();
-	_device0 = _manager->createDevice(fp , true );
-	_device0->debugStr = &global_debug;
-	if( !_device0 ) 
-	{
-		DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
-		exit( 0 );
-	}
-	_device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
-	_manager->start();
+    if(setting_useKinect)
+    {
+        _manager = V::OpenNIDeviceManager::InstancePtr();
+        string fp = loadResource(RES_CONFIG)->getFilePath();
+        _device0 = _manager->createDevice(fp , true );
+        _device0->debugStr = &global_debug;
+        if( !_device0 ) 
+        {
+            DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
+            exit( 0 );
+        }
+        _device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
+        _manager->start();
 
-	gl::Texture::Format format;
-	gl::Texture::Format depthFormat;
-	mColorTex =			gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
-	mDepthTex =			gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
-	mOneUserTex =		gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+        gl::Texture::Format format;
+        gl::Texture::Format depthFormat;
+        mColorTex =			gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
+        mDepthTex =			gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+        mOneUserTex =		gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+    }
 	
 	
 	// init debug params
@@ -291,7 +310,7 @@ void SkelsApp::setup()
         o.reset(new Obj3D(xId, xName, Vec3f(xX, .0f, xZ)));
         o->setSoundActive((bool) xActive);
         if(xLt != .0f) o->setLifetime(xLt);
-        oscManager->send("/skels/event/objon", o->objID, xActive);
+        oscManager->send("/skels/event/objon", o->objID, 0);
         world.addObject(o);
         objectsMap[o->name] = o;
     }
@@ -309,7 +328,7 @@ void SkelsApp::setup()
         world.addObstacle(o);
     }
 	
-	kb_facing = Vec3f(.0f, .0f, -500.0f);
+	
     
     // visuals
     // ------
@@ -318,10 +337,13 @@ void SkelsApp::setup()
     visualsMap[v->name] = v;
     v->setActive(true);
     
-    v.reset(new VisualsBump(2, "l1_vis_bump"));
+    v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
     v.reset(new VisualsExpire(3, "vis_expire"));
+    visualsMap[v->name] = v;
+    
+    v.reset(new VisualsCollect(4, "vis_collect", this));
     visualsMap[v->name] = v;
 	
 	
@@ -335,6 +357,11 @@ void SkelsApp::setup()
 		keyOn[i] = false;
     
     events = shared_ptr<Events>(new Events(&gameState, oscManager, &xmlWorld));
+    
+    // loose ends
+    // ----------------
+    kb_facing = Vec3f(.0f, .0f, -500.0f);
+    massCenter = NULLVEC;
     
     
    // SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
@@ -355,7 +382,7 @@ void SkelsApp::enterState(AppState s)
 		global_debug = "waiting for user"; 
 		break;
 	case SK_KEYBOARD:
-		oscManager->send("/skels/start", 1.0f);
+		
 		break;
 	case SK_CLEARING_LEVEL:
 		oscManager->send("/skels/enterstate/clearlevel", 1.0f);
@@ -366,7 +393,7 @@ void SkelsApp::enterState(AppState s)
 
 void SkelsApp::mouseDown( MouseEvent event )
 {
-	center.pos = Vec3f();
+	center.pos = Vec3f(.0f, .0f, .0f);
 }
 
 void SkelsApp::update()
@@ -379,19 +406,22 @@ void SkelsApp::update()
     
     oscManager->receive();
 	
-	
-	gl::setMatricesWindow( 640, 480 );
-	
 	// Update textures
 	// ---------------------------------------------------------------------------
-	mColorTex.update( getColorImage() );
-	mDepthTex.update( getDepthImage24() );	// Histogram
-
-	Vec3f shoulders;
+    if(setting_useKinect)
+    {
+        mColorTex.update( getColorImage() );
+        mDepthTex.update( getDepthImage24() );	// Histogram
+        
+        if( _manager->hasUsers() && _manager->hasUser(1) ) mOneUserTex.update( getUserColorImage(1) );
+    }
+    
 	
-	// Uses manager to handle users.
-	if( _manager->hasUsers() && _manager->hasUser(1) ) mOneUserTex.update( getUserColorImage(1) );
-	
+    // declare stuff we may need for either mode
+    Vec3f shoulders = NULLVEC;
+    
+    // Handle KB mode
+    // --------------------------------------------------------------
 	if(state == SK_KEYBOARD)
 	{
 		center.update(dt);
@@ -408,12 +438,11 @@ void SkelsApp::update()
 	
 	// if we're tracking, do position updates, and apply hand movements
 	// ---------------------------------------------------------------------------
-	else if( _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
+	else if(setting_useKinect && _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
 	{
 		if(state != SK_TRACKING)
 		{
 			enterState(SK_TRACKING);
-			oscManager->send("/skels/start", 1.0f);
 		}
 		
 		center.update(dt);
@@ -485,27 +514,19 @@ void SkelsApp::update()
 		}
 	}
 	
-	
-	//console() << "massCenter " << massCenter.x << "/" << massCenter.y << "/" << massCenter.z << endl;
-//	console() << "left " << diffLeftHand.x << "/" << diffLeftHand.y << "/" << diffLeftHand.z << endl;
-//	console() << "right " << diffRightHand.x << "/" << diffRightHand.y << "/" << diffRightHand.z << endl;
-//	console() << "c " << center.pos.x << "/" << center.pos.y << "/" << center.pos.z << endl;
+
 	
 	// calc new velocity based on distances from hand to body center
 	// ---------------------------------------------------------------------------
 	float clmp = 150.0f;
 	diffLeftHand.x = math<float>::clamp(diffLeftHand.x, -clmp, clmp);
-	//diffLeftHand.y = math<float>::clamp(diffLeftHand.y, -clmp, clmp);
 	diffLeftHand.z = math<float>::clamp(diffLeftHand.z, -clmp, clmp);
 	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
-	//diffRightHand.y = math<float>::clamp(diffRightHand.y, -clmp, clmp);
 	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
 	
 	Vec3f totaldiff = diffLeftHand + diffRightHand;
 	if(totaldiff.length() < mParam_velThreshold) totaldiff = Vec3f();
-	
-	
-	
+
 	if(state == SK_TRACKING)
 	{
 		center.vel = totaldiff * Vec3f(2.5f, .0f, 2.5f);
@@ -522,13 +543,6 @@ void SkelsApp::update()
 	shoulders_norm = shoulders.normalized();
 	shoulders_norm.rotateY(M_PI_2);
 	shoulders_norm.normalize();
-    
-    
-    // SOUNDS
-    
-  //  sounds.updateListener(center.pos, center.vel, shoulders_norm, Vec3f(.0f, 1.0f, .0f));
-    
- //   sounds.system->update();
 
 	
 	// send OSC updates to Max
@@ -542,7 +556,6 @@ void SkelsApp::update()
 	// world
 	// ---------------------------------------------------------------------------
 	
-	//gameState.player = center;
 	world.update(gameState, dt);
     
 	vector<ObjPos> objPositions = world.getPositions();
@@ -623,24 +636,6 @@ void SkelsApp::update()
 void SkelsApp::renderBackground()
 {
 	
-	
-	// draw the background grid, total -10000 to 10000, but clip everything outside the frame
-	// ---------------------------------------------------------------------------
-	
-	//for(int i = 0; i < 100; i++)
-//		for(int j = 0; j < 100; j++)
-//		{
-//			//if(center.pos.distance(Vec3f(i*1000-50000, .0, j*1000-50000)) > getWindowWidth() * 2) continue;
-//			
-//			glPushMatrix();
-//			gl::translate(Vec3f(i * 1000 - 50000, -300.0f, j * 1000 - 50000));
-//			gl::color(ColorA(1.0f, .5f, 1.0f, .4f));
-//			glLineWidth(1.0f);
-//			gl::drawLine(Vec3f(-520.0f, .0f, 0.0f), Vec3f(520.0f, .0f, 0.0f));
-//			gl::drawLine(Vec3f(.0f, .0f, -520.0f), Vec3f(0.0f, .0f, 520.0f));
-//			glPopMatrix();
-//		}
-	
 	for(int j = 0; j < 50; j++)
 	{
 		if(center.pos.distance(Vec3f(j*2000-50000, .0f, .0f)) > getWindowWidth() * 5) continue;
@@ -649,14 +644,6 @@ void SkelsApp::renderBackground()
 		gl::translate(Vec3f(j * 2000 - 50000, .0f, -2000.0f));
 		gl::color(ColorA(.7f, .2f, .7f, .4f));
 		gl::drawLine(Vec3f(.0f, .0f, -45000.0f), Vec3f(0.0f, .0f, 45000.0f));
-		
-		//for(int k = 0; k < 50; k++)
-//		{
-//			glPushMatrix();
-//			gl::translate(Vec3f(.0f, -2000.0f, k * 2000 - 50000));
-//			gl::drawLine(Vec3f(-45000.0f, .0f, .0f), Vec3f(45000.0f, .0f, .0f));
-//			glPopMatrix();
-//		}
 			
 		glPopMatrix();
 	}
@@ -665,8 +652,10 @@ void SkelsApp::renderBackground()
 
 void SkelsApp::draw()
 {
+    gl::setMatricesWindow( WIDTH, HEIGHT );
 	gl::clear( Color( 0, 0, 0 ), true ); 
 	gl::enableAlphaBlending( false );
+    
 	
 	// in debug mode
 	// ---------------------------------------------------------------------------
@@ -713,7 +702,7 @@ void SkelsApp::draw()
 				}
 			}
 				
-			world.draw();
+            world.draw();
 			
 		} // endif state tracking
 		
@@ -722,20 +711,21 @@ void SkelsApp::draw()
 		// draw debug info: depth and colour tex
 		// ---------------------------------------------------------------------------
 
-		
-		gl::setMatricesWindow( WIDTH, HEIGHT );
-
-		float sx = 320/2;
-		float sy = 240/2;
-		float xoff = 10;
-		float yoff = 10;
-		
-		glEnable( GL_TEXTURE_2D );
-		gl::color( cinder::ColorA(1, 1, 1, 1) );
-		gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
-		gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
-		glDisable( GL_TEXTURE_2D );
-		
+        gl::setMatricesWindow( WIDTH, HEIGHT );
+        
+		if(setting_useKinect)
+        {
+            float sx = 320/2;
+            float sy = 240/2;
+            float xoff = 10;
+            float yoff = 10;
+            
+            glEnable( GL_TEXTURE_2D );
+            gl::color( cinder::ColorA(1, 1, 1, 1) );
+            gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
+            gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
+            glDisable( GL_TEXTURE_2D );
+        }
 		
 		// debug params
 		// ---------------------------------------------------------------------------
@@ -756,7 +746,7 @@ void SkelsApp::draw()
 		if(state == SK_TRACKING || state == SK_KEYBOARD)
 		{
             // draw some text
-			//gl::drawStringCentered("rescue the lost, and escape", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
+			//gl::drawStringCentered("FOOBAR", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
             
             // draw visuals
             // -----
@@ -788,13 +778,29 @@ void SkelsApp::draw()
 
 void SkelsApp::keyDown( KeyEvent event )
 {
-	console() << "key dn " << event.getChar() << endl;
 	
 	// clean shutdown
 	if( event.getCode() == KeyEvent::KEY_ESCAPE )
 	{
 		this->quit();
 		this->shutdown();
+	}
+    
+    else if( event.getChar() == ' ' )
+	{
+		oscManager->send("/skels/start", 1.0f);
+        center.setActive(true);
+        
+        vector<ObjPtr>::iterator obit;
+        for(obit = world.things.begin(); obit != world.things.end(); obit++)
+        {
+            ObjPtr obj = *obit;
+            
+            obj->setActive(true);
+            if(obj->soundActive)
+                oscManager->send("/skels/event/objon", obj->objID, 1);
+        }
+        
 	}
 	
 	// toggle debug mode
@@ -842,9 +848,12 @@ void SkelsApp::keyUp( KeyEvent event )
 void SkelsApp::shutdown()
 {
 	oscManager->send("/skels/stop", 1.0f);
-	_manager->destroyAll();
+    
+    if(setting_useKinect)
+        _manager->destroyAll();
+    
+    
 	delete oscManager;
-//	delete _manager; 
 }
 
 CINDER_APP_BASIC( SkelsApp, RendererGl )

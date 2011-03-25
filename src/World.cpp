@@ -27,6 +27,11 @@ void World::update(GameState gs, float dt)
 	}
 }
 
+void World::start()
+{
+    
+}
+
 void World::draw()
 {
 	vector<ObjPtr>::iterator obit;

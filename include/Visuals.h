@@ -12,6 +12,8 @@
 #include <string>
 #include "cinder/Cinder.h"
 #include "cinder/Rand.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/app/App.h"
 
 using namespace std;
 using namespace ci;
@@ -65,4 +67,15 @@ public:
     void init();
     void draw();
     void setActive(bool active);
+};
+
+class VisualsCollect : public Visuals
+{
+public:
+    VisualsCollect(int _id, string _name, app::App* app) : Visuals(_id, _name) { init(app); }
+    void init(app::App* app);
+    void draw();
+    void setActive(bool active);
+    
+    vector<gl::Texture> textures;
 };

@@ -7,7 +7,7 @@
             <z>1000</z>
         </pos>
         <active>1</active>
-        <lifetime>10</lifetime>
+        <lifetime>60</lifetime>
     </object>
     <object>
         <id>2</id>
@@ -112,6 +112,26 @@
 <events>
     <event>
         
+        <objectname>obstacle</objectname>
+        <type>EVENT_BUMP</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_bump</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+    
+    <event>
+        
         <objectname>l1_item1</objectname>
         <type>EVENT_COLLECT</type>
         
@@ -120,7 +140,7 @@
         </nextobjects>
         
         <nextvisuals>
-
+            <visualsname>vis_collect</visualsname>
         </nextvisuals>
         
         <deactivateobjects>

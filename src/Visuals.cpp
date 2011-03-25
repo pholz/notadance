@@ -10,7 +10,7 @@
 #include "Visuals.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
-
+#include "cinder/ImageIo.h"
 
 Visuals::Visuals(int _id, string _name) : visID(_id), name(_name)
 {
@@ -112,9 +112,9 @@ void VisualsExpire::draw()
     
     for(int i = 0; i < SAMPLE_WINDOW_SIZE; i++)
     {
-        glVertex3f(math<float>::cos(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40, 
-                   math<float>::log(spectrum[i])*10.0f + 30.0f, 
-                   math<float>::sin(4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*40);
+        glVertex3f(math<float>::cos(expired * 4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*60 * math<float>::cos(expired*30.0f), 
+                   math<float>::log(spectrum[i])*20.0f + 30.0f, 
+                   math<float>::sin(expired * 4*M_PI*float(i)/float(SAMPLE_WINDOW_SIZE))*60 * math<float>::cos(expired*30.0f));
     }
     
     glEnd();
@@ -123,6 +123,34 @@ void VisualsExpire::draw()
 }
 
 void VisualsExpire::setActive(bool _active)
+{
+    active = _active;
+    if(active)
+        expired = 0;
+}
+
+void VisualsCollect::init(app::App* app)
+{
+    lifetime = .5f;
+    
+    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic1.png") ) ));
+    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic2.png") ) ));
+    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic3.png") ) ));
+}
+
+void VisualsCollect::draw()
+{
+	gl::color(Color(1, 1, 1));
+    
+    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H );
+
+    gl::draw(textures[ (int) ( (expired/lifetime)* (float) textures.size() ) % 3 ], 
+             Rectf(0, 0, GLOBAL_W, GLOBAL_H));
+    
+    
+}
+
+void VisualsCollect::setActive(bool _active)
 {
     active = _active;
     if(active)

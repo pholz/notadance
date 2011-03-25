@@ -49,7 +49,12 @@ public:
                
 struct ConditionsComp {
    bool operator() (const Conditions& lhs, const Conditions& rhs) const
-   {return lhs.obj < rhs.obj;}
+   {    
+       if(lhs.obj.compare(rhs.obj))
+           return lhs.obj < rhs.obj;
+       else
+           return lhs.event < rhs.event;
+   }
 };
 
 

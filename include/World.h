@@ -31,6 +31,7 @@ public:
 	void addObstacle(ObjPtr);
 	void removeObject(int objID);
 	void draw();
+    void start();
 	vector<ObjPos> getPositions();
 	
 	vector<ObjPtr> things, obstacles; 
