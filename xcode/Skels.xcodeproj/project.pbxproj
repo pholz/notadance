@@ -40,6 +40,7 @@
 		666BD8DC13317873004F29F5 /* world.xml in Resources */ = {isa = PBXBuildFile; fileRef = 666BD8DB13317873004F29F5 /* world.xml */; };
 		667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */; };
 		6699B9A413283F4300B259FF /* Events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6699B9A313283F4300B259FF /* Events.cpp */; };
+		66E2ED72133E8D2F00102B6D /* expire_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED71133E8D2F00102B6D /* expire_frag.glsl */; };
 		66E3B54D13076045003958D5 /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B54C13076045003958D5 /* World.cpp */; };
 		66E3B59813077473003958D5 /* Obj3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B59713077473003958D5 /* Obj3D.cpp */; };
 		66F55466133D4DA600E7771E /* pic2.png in Resources */ = {isa = PBXBuildFile; fileRef = 66F55464133D4DA600E7771E /* pic2.png */; };
@@ -158,6 +159,7 @@
 		6699B9A213283AF500B259FF /* Events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Events.h; path = ../include/Events.h; sourceTree = SOURCE_ROOT; };
 		6699B9A313283F4300B259FF /* Events.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Events.cpp; path = ../src/Events.cpp; sourceTree = SOURCE_ROOT; };
 		6699B9A513284C2300B259FF /* Visuals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Visuals.h; path = ../include/Visuals.h; sourceTree = SOURCE_ROOT; };
+		66E2ED71133E8D2F00102B6D /* expire_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = expire_frag.glsl; path = ../resources/expire_frag.glsl; sourceTree = "<group>"; };
 		66E3B54B1307603C003958D5 /* World.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = World.h; path = ../include/World.h; sourceTree = SOURCE_ROOT; };
 		66E3B54C13076045003958D5 /* World.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = World.cpp; path = ../src/World.cpp; sourceTree = SOURCE_ROOT; };
 		66E3B5521307645A003958D5 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
@@ -285,6 +287,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				66E2ED71133E8D2F00102B6D /* expire_frag.glsl */,
 				66F55472133D4F5500E7771E /* mem_frag.glsl */,
 				66F55473133D4F5500E7771E /* pass_vert.glsl */,
 				66F5546E133D4EEF00E7771E /* blur_frag.glsl */,
@@ -545,6 +548,7 @@
 				66F55471133D4EEF00E7771E /* blur_vert.glsl in Resources */,
 				66F55474133D4F5500E7771E /* mem_frag.glsl in Resources */,
 				66F55475133D4F5500E7771E /* pass_vert.glsl in Resources */,
+				66E2ED72133E8D2F00102B6D /* expire_frag.glsl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

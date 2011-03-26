@@ -17,7 +17,10 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/params/Params.h"
 #include "cinder/Camera.h"
+#include "cinder/Surface.h"
 #include "cinder/Rand.h"
+#include "cinder/ImageIo.h"
+#include "cinder/gl/GlslProg.h"
 #include "VOpenNIHeaders.h"
 #include <sstream>
 #include "OscManager.h"
@@ -181,6 +184,10 @@ public:	// Members
     
     // SETTINGS
     bool setting_useKinect;
+    
+    map< string, vector<gl::Texture> > texturesMap;
+    map< string, vector<Surface> > surfacesMap;
+    map< string, gl::GlslProg > shadersMap;
 
 };
 
@@ -328,7 +335,23 @@ void SkelsApp::setup()
         world.addObstacle(o);
     }
 	
-	
+	// textures
+    //.
+    
+    ImageSourceRef img = loadImage( getResourcePath("pic1.png") );
+    surfacesMap["l1_item1"].push_back(Surface( img ));
+    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    
+    img = loadImage( getResourcePath("pic2.png") );
+    surfacesMap["l1_item1"].push_back(Surface( img ));
+    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    
+    img = loadImage( getResourcePath("pic3.png") );
+    surfacesMap["l1_item1"].push_back(Surface( img ));
+    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    
+    shadersMap["memory_collect"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_MEM_FRAG ));
+    shadersMap["memory_expire"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_EXPIRE_FRAG ));
     
     // visuals
     // ------
@@ -340,10 +363,10 @@ void SkelsApp::setup()
     v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsExpire(3, "vis_expire"));
+    v.reset(new VisualsExpire(3, "vis_expire", &(texturesMap["l1_item1"]), &shadersMap));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsCollect(4, "vis_collect", this));
+    v.reset(new VisualsCollect(4, "vis_collect", &(texturesMap["l1_item1"]), &shadersMap));
     visualsMap[v->name] = v;
 	
 	
@@ -367,6 +390,8 @@ void SkelsApp::setup()
    // SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
     
    // objectsMap["l1_item1"]->setSound(s);
+    
+
 }
 
 void SkelsApp::enterState(AppState s)

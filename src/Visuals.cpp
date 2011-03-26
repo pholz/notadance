@@ -9,8 +9,10 @@
 #include "common.h"
 #include "Visuals.h"
 #include "cinder/gl/gl.h"
+
+#include "cinder/gl/Texture.h"
 #include "cinder/Camera.h"
-#include "cinder/ImageIo.h"
+
 #include "cinder/CinderResources.h"
 #include "Resources.h"
 
@@ -77,16 +79,35 @@ void VisualsBump::init()
 
 void VisualsBump::draw()
 {
-	gl::color(Color(1, 1, 1));
+    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
+	gl::color(Color(1, 0, 0));
     
-    glBegin(GL_LINE_STRIP);
+    //glBegin(GL_LINE_STRIP);
     
-    for(int i = 0; i < 100; i++)
-    {
-        glVertex2i(rand.nextInt(-GLOBAL_W/2, GLOBAL_W*1.5), rand.nextInt(-GLOBAL_H/2, GLOBAL_H*1.5));
-    }
+    //for(int i = 0; i < 100; i++)
+   // {
+        
+        glPushMatrix();
+        
+            gl::translate(Vec2f(GLOBAL_W/2, GLOBAL_H/2));
+                          
     
-    glEnd();
+            float offset = rand.nextFloat(-5.0f, 5.0f);
+            glPushMatrix();              
+                gl::rotate(Vec3f(.0f, .0f, -45.0f + offset));
+                gl::drawSolidRect( Rectf(-500, -180, 500, 180) );
+            glPopMatrix();
+            glPushMatrix();              
+                gl::rotate(Vec3f(.0f, .0f, 45.0f + offset));
+                gl::drawSolidRect( Rectf(-500, -180, 500, 180) );
+            glPopMatrix();
+        
+        glPopMatrix();
+        
+        //glVertex2i(rand.nextInt(-GLOBAL_W/2, GLOBAL_W*1.5), rand.nextInt(-GLOBAL_H/2, GLOBAL_H*1.5));
+   // }
+    
+   // glEnd();
 }
 
 void VisualsBump::setActive(bool _active)
@@ -96,15 +117,20 @@ void VisualsBump::setActive(bool _active)
         expired = 0;
 }
 
-void VisualsExpire::init()
+void VisualsExpire::init(vector<gl::Texture> *texs, 
+                         map<string, gl::GlslProg> *progMap)
 {
     lifetime = 6.0f;
+    
+    shaders = progMap;
+    textures = texs;
 }
 
 void VisualsExpire::draw()
 {
 	gl::color(Color(1, 0, 0));
     
+    /*
     gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
     CameraPersp cam( GLOBAL_W, GLOBAL_H, 50, 0.1, 10000 );
     cam.lookAt(Vec3f(.0f,  40.0f, 120.0f), Vec3f(.0f, .0f, .0f));
@@ -120,6 +146,29 @@ void VisualsExpire::draw()
     }
     
     glEnd();
+     */
+    
+    gl::color(Color(1, 1, 1));
+    
+    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H );
+    
+    gl::Texture &tex = (*textures)[ (int) ( (expired/lifetime)* (float) textures->size() ) % 3 ];
+    
+    tex.bind(0);
+    
+    gl::GlslProg &memShader = (*shaders)["memory_expire"];
+    
+    memShader.bind();
+    memShader.uniform("tex0", 0);
+    memShader.uniform("relativeTime", expired/lifetime);
+    memShader.uniform("rand", rand.nextFloat());
+    
+    gl::draw(tex, Rectf(-rand.nextFloat()*50.0f, -rand.nextFloat()*50.0f, GLOBAL_W*1.5f, GLOBAL_H*1.5f));
+    
+    
+    memShader.unbind();
+    tex.unbind(0);
+    
     
     gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
 }
@@ -131,16 +180,12 @@ void VisualsExpire::setActive(bool _active)
         expired = 0;
 }
 
-void VisualsCollect::init(app::App* app)
+void VisualsCollect::init(vector<gl::Texture> *texs, map<string, gl::GlslProg> *progMap)
 {
     lifetime = .5f;
     
-    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic1.png") ) ));
-    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic2.png") ) ));
-    textures.push_back(gl::Texture( loadImage( app->getResourcePath("pic3.png") ) ));
-    
-    memShader = gl::GlslProg(app->loadResource( RES_PASS_VERT ),
-                             app->loadResource( RES_MEM_FRAG ));
+    shaders = progMap;
+    textures = texs;
     
 }
 
@@ -150,10 +195,11 @@ void VisualsCollect::draw()
     
     gl::setMatricesWindow( GLOBAL_W, GLOBAL_H );
     
-    gl::Texture &tex = textures[ (int) ( (expired/lifetime)* (float) textures.size() ) % 3 ];
+    gl::Texture &tex = (*textures)[ (int) ( (expired/lifetime)* (float) textures->size() ) % 3 ];
     
     tex.bind(0);
     
+    gl::GlslProg &memShader = (*shaders)["memory_collect"];
     
     memShader.bind();
     memShader.uniform("tex0", 0);
@@ -162,6 +208,9 @@ void VisualsCollect::draw()
 
     gl::draw(tex, Rectf(-rand.nextFloat()*50.0f, -rand.nextFloat()*50.0f, GLOBAL_W*1.5f, GLOBAL_H*1.5f));
     
+    
+    memShader.unbind();
+    tex.unbind(0);
     
 }
 

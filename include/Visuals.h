@@ -60,26 +60,37 @@ public:
     void init();
     void draw();
     void setActive(bool active);
+    
+    Rand rand;
 };
 
 class VisualsExpire : public Visuals
 {
 public:
-    VisualsExpire(int _id, string _name) : Visuals(_id, _name) { init(); }
-    void init();
+    VisualsExpire(int _id, string _name, vector<gl::Texture> *texs, 
+                  map<string, gl::GlslProg> *progMap) : Visuals(_id, _name) { init(texs, progMap); }
+    void init(vector<gl::Texture> *texs, 
+              map<string, gl::GlslProg> *progMap);
     void draw();
     void setActive(bool active);
+
+    vector<gl::Texture> *textures;
+    map<string, gl::GlslProg> *shaders;
+    Rand rand;
 };
 
 class VisualsCollect : public Visuals
 {
 public:
-    VisualsCollect(int _id, string _name, app::App* app) : Visuals(_id, _name) { init(app); }
-    void init(app::App* app);
+    VisualsCollect(int _id, string _name, vector<gl::Texture> *texs, 
+                   map<string, gl::GlslProg> *progMap) : Visuals(_id, _name) 
+    { init(texs, progMap); }
+    
+    void init(vector<gl::Texture> *texs, map<string, gl::GlslProg> *progMap);
     void draw();
     void setActive(bool active);
     
-    vector<gl::Texture> textures;
-    gl::GlslProg memShader;
+    vector<gl::Texture> *textures;
+    map<string, gl::GlslProg> *shaders;
     Rand rand;
 };
