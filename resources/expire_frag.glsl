@@ -3,23 +3,16 @@
 uniform sampler2D	tex0;
 uniform float       relativeTime;
 uniform float       rand;
+uniform float alpha;
+
+varying vec4        vVertex;
+varying float       depth;
 
 void main()
 { 
-   // gl_FragColor = texture2D( tex0, gl_TexCoord[0].st);
+    gl_FragColor.r = texture2D( tex0, gl_TexCoord[0].st).r;
+    gl_FragColor.g = 0.0;
+    gl_FragColor.b = 0.0;
 
-    vec3 sum = vec3(0.0, 0.0, 0.0);
-
-    for(int i = -9; i < 10; i++)
-    {
-        if(i != 0)
-            sum += texture2D( tex0, gl_TexCoord[0].st + vec2(i, 0)).rgb * 0.1 * relativeTime;
-    }
-
-    sum += texture2D( tex0, gl_TexCoord[0].st).rgb * 0.5;
-
-    //sum/=21.0;
-
-    gl_FragColor.rgb = sum;
-    gl_FragColor.a = 1.0 - rand/2.0;
+    gl_FragColor.a = alpha;
 }

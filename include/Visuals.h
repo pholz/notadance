@@ -14,8 +14,13 @@
 #include "cinder/Rand.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/gl/GlslProg.h"
+#include "cinder/gl/Vbo.h"
+#include "cinder/Surface.h"
 #include "cinder/app/App.h"
 #include "cinder/Rand.h"
+
+#define VBO_X_RES 100
+#define VBO_Y_RES 100
 
 using namespace std;
 using namespace ci;
@@ -68,15 +73,19 @@ class VisualsExpire : public Visuals
 {
 public:
     VisualsExpire(int _id, string _name, vector<gl::Texture> *texs, 
-                  map<string, gl::GlslProg> *progMap) : Visuals(_id, _name) { init(texs, progMap); }
+                  map<string, gl::GlslProg> *progMap, vector<Surface> *surfaces) : Visuals(_id, _name) { init(texs, progMap, surfaces); }
     void init(vector<gl::Texture> *texs, 
-              map<string, gl::GlslProg> *progMap);
+              map<string, gl::GlslProg> *progMap,
+              vector<Surface> *surfaces);
     void draw();
     void setActive(bool active);
 
     vector<gl::Texture> *textures;
+    vector<Surface> *surfaces;
     map<string, gl::GlslProg> *shaders;
     Rand rand;
+    gl::VboMesh mVboMesh;
+    
 };
 
 class VisualsCollect : public Visuals

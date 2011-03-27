@@ -16,6 +16,8 @@
 #include "cinder/CinderResources.h"
 #include "Resources.h"
 
+#include <iostream>
+
 Visuals::Visuals(int _id, string _name) : visID(_id), name(_name)
 {
     init();
@@ -118,17 +120,77 @@ void VisualsBump::setActive(bool _active)
 }
 
 void VisualsExpire::init(vector<gl::Texture> *texs, 
-                         map<string, gl::GlslProg> *progMap)
+                         map<string, gl::GlslProg> *progMap,
+                         vector<Surface> *_surfaces)
 {
-    lifetime = 6.0f;
+    
+    lifetime = 3.0f;
     
     shaders = progMap;
     textures = texs;
+    surfaces = _surfaces;
+    
+    gl::VboMesh::Layout layout;
+	
+    layout.setStaticIndices();
+	layout.setDynamicPositions();
+	layout.setStaticTexCoords2d();
+	
+	
+	std::vector<Vec3f> positions;
+	std::vector<Vec2f> texCoords;
+	std::vector<uint32_t> indices; 
+    
+    
+    
+	
+	int numVertices = VBO_X_RES * VBO_Y_RES;
+	int numShapes	= ( VBO_X_RES - 1 ) * ( VBO_Y_RES - 1 );
+    
+	mVboMesh = gl::VboMesh( numVertices, numShapes * 4, layout, GL_QUADS );
+    
+    
+	
+	for( int x=0; x<VBO_X_RES; ++x ){
+		for( int y=0; y<VBO_Y_RES; ++y ){
+		//	indices.push_back( x * VBO_Y_RES + y );
+            if( ( x + 1 < VBO_X_RES ) && ( y + 1 < VBO_Y_RES ) ) {
+                indices.push_back( (x+0) * VBO_Y_RES + (y+0) );
+                indices.push_back( (x+1) * VBO_Y_RES + (y+0) );
+                indices.push_back( (x+1) * VBO_Y_RES + (y+1) );
+                indices.push_back( (x+0) * VBO_Y_RES + (y+1) );
+            }
+            
+			float xPer	= x / (float)(VBO_X_RES-1);
+			float yPer	= y / (float)(VBO_Y_RES-1);
+			
+			float cx = ( xPer * 2.0f - 1.0f ) * VBO_X_RES;
+            float cy = ( yPer * 2.0f - 1.0f ) * VBO_Y_RES;
+			
+			positions.push_back( Vec3f( cx, 0.0f, cy ) );
+			texCoords.push_back( Vec2f( xPer, yPer ) );		
+            
+          //  cout << x * VBO_Y_RES + y << ": " << cx << "/" << cy << ", " << xPer << "/" << yPer << endl;		
+		}
+	}
+	
+    
+    mVboMesh.bufferIndices( indices );
+    mVboMesh.bufferTexCoords2d( 0, texCoords );
+    
+    
+    gl::VboMesh::VertexIter iter = mVboMesh.mapVertexBuffer();
+	for( int x = 0; x < VBO_X_RES; ++x ) {
+		for( int y = 0; y < VBO_Y_RES; ++y ) {
+			iter.setPosition( positions[x * VBO_Y_RES + y] );
+			++iter;
+		}
+	}
+
 }
 
 void VisualsExpire::draw()
 {
-	gl::color(Color(1, 0, 0));
     
     /*
     gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
@@ -150,26 +212,40 @@ void VisualsExpire::draw()
     
     gl::color(Color(1, 1, 1));
     
-    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H );
     
-    gl::Texture &tex = (*textures)[ (int) ( (expired/lifetime)* (float) textures->size() ) % 3 ];
     
+    gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
+    CameraPersp cam( GLOBAL_W, GLOBAL_H, 50, 0.1, 10000 );
+    cam.lookAt(Vec3f(.0f,  100.0f, 40.0f), Vec3f(.0f, .0f, .0f));
+    gl::setMatrices(cam);
+    
+    gl::Texture &tex = (*textures)[ (int) ( (expired/lifetime)* (float) textures->size() * 20.0f) % 3 ];
     tex.bind(0);
     
     gl::GlslProg &memShader = (*shaders)["memory_expire"];
-    
     memShader.bind();
     memShader.uniform("tex0", 0);
     memShader.uniform("relativeTime", expired/lifetime);
     memShader.uniform("rand", rand.nextFloat());
     
-    gl::draw(tex, Rectf(-rand.nextFloat()*50.0f, -rand.nextFloat()*50.0f, GLOBAL_W*1.5f, GLOBAL_H*1.5f));
+    gl::enableAlphaBlending( false );
+    
+    memShader.uniform("alpha", 1.0f-expired/lifetime);
+    //gl::color(ColorA(1, 1, 1, .3));
+    gl::draw(mVboMesh);
+
+    gl::enableWireframe();
+    
+   // gl::draw(tex, Rectf(-rand.nextFloat()*50.0f, -rand.nextFloat()*50.0f, GLOBAL_W*1.5f, GLOBAL_H*1.5f));
+    memShader.uniform("rand", rand.nextFloat());
+    memShader.uniform("alpha", rand.nextFloat(.5f, 1.0f)-(expired/lifetime)/2.0f);
+    gl::draw(mVboMesh);
     
     
     memShader.unbind();
     tex.unbind(0);
     
-    
+    gl::disableWireframe();
     gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
 }
 
@@ -182,7 +258,7 @@ void VisualsExpire::setActive(bool _active)
 
 void VisualsCollect::init(vector<gl::Texture> *texs, map<string, gl::GlslProg> *progMap)
 {
-    lifetime = .5f;
+    lifetime = 0.8f;
     
     shaders = progMap;
     textures = texs;

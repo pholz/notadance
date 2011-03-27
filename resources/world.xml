@@ -7,7 +7,7 @@
             <z>1000</z>
         </pos>
         <active>1</active>
-        <lifetime>5</lifetime>
+        <lifetime>50</lifetime>
     </object>
     <object>
         <id>2</id>
@@ -140,7 +140,7 @@
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect</visualsname>
+            <visualsname>vis_collect_l1i1</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -208,6 +208,7 @@
         </nextobjects>
         
         <nextvisuals>
+            <visualsname>vis_collect_l2i1</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -229,6 +230,7 @@
         </nextobjects>
         
         <nextvisuals>
+            <visualsname>vis_collect_l2i2</visualsname>
         </nextvisuals>
         
         <deactivateobjects>

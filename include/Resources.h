@@ -6,3 +6,5 @@
 #define RES_MEM_FRAG			CINDER_RESOURCE(../resources/, mem_frag.glsl, 131, GLSL)
 #define RES_PASS_VERT			CINDER_RESOURCE(../resources/, pass_vert.glsl, 132, GLSL)
 #define RES_EXPIRE_FRAG			CINDER_RESOURCE(../resources/, expire_frag.glsl, 133, GLSL)
+#define RES_EXPIRE_VERT			CINDER_RESOURCE(../resources/, expire_vert.glsl, 134, GLSL)
+#define RES_PASS_FRAG			CINDER_RESOURCE(../resources/, pass_frag.glsl, 135, GLSL)

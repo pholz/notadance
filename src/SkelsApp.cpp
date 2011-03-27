@@ -34,7 +34,7 @@
 #include "Resources.h"
 #include "cinder/Xml.h"
 #include "Sounds.h"
-
+#include "FlickrGen.h"
 
 
 #define OSC_SEND_HOST "localhost"
@@ -184,10 +184,13 @@ public:	// Members
     
     // SETTINGS
     bool setting_useKinect;
+    int setting_picsMode;
     
     map< string, vector<gl::Texture> > texturesMap;
     map< string, vector<Surface> > surfacesMap;
     map< string, gl::GlslProg > shadersMap;
+    
+    FlickrGen *flickr;
 
 };
 
@@ -200,6 +203,7 @@ void SkelsApp::setup()
 {
 
     setting_useKinect = true;
+    setting_picsMode = 0;
     
     // get cmd line args and set settings
     // ------------
@@ -209,6 +213,10 @@ void SkelsApp::setup()
     {
         if(!argsIt->compare("NOKINECT"))
             setting_useKinect = false;
+        
+        if(!argsIt->compare("USERPICS"))
+            setting_picsMode = 1;
+            
     }
 	
 	// init OpenNI stuff
@@ -337,21 +345,41 @@ void SkelsApp::setup()
 	
 	// textures
     //.
+    flickr = new FlickrGen("pholz", setting_picsMode);
     
-    ImageSourceRef img = loadImage( getResourcePath("pic1.png") );
-    surfacesMap["l1_item1"].push_back(Surface( img ));
-    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    vector<gl::Texture>::iterator texit;
     
-    img = loadImage( getResourcePath("pic2.png") );
-    surfacesMap["l1_item1"].push_back(Surface( img ));
-    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    int i =0;
+    for(texit = flickr->textures.begin(); i < 3 && texit != flickr->textures.end(); texit++, i++)
+    {
+        texturesMap["l1_item1"].push_back(*texit);
+    }
     
-    img = loadImage( getResourcePath("pic3.png") );
-    surfacesMap["l1_item1"].push_back(Surface( img ));
-    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+    for( ; i < 6 && texit != flickr->textures.end(); texit++, i++)
+    {
+        texturesMap["l2_item1"].push_back(*texit);
+    }
+    
+    for( ; i < 9 && texit != flickr->textures.end(); texit++, i++)
+    {
+        texturesMap["l2_item2"].push_back(*texit);
+    }
+    
+//    ImageSourceRef img = loadImage( getResourcePath("pic1.png") );
+//    surfacesMap["l1_item1"].push_back(Surface( img ));
+//    
+//    
+//    img = loadImage( getResourcePath("pic2.png") );
+//    surfacesMap["l1_item1"].push_back(Surface( img ));
+//    texturesMap["l1_item1"].push_back(gl::Texture( img ));
+//    
+//    img = loadImage( getResourcePath("pic3.png") );
+//    surfacesMap["l1_item1"].push_back(Surface( img ));
+//    texturesMap["l1_item1"].push_back(gl::Texture( img ));
     
     shadersMap["memory_collect"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_MEM_FRAG ));
-    shadersMap["memory_expire"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_EXPIRE_FRAG ));
+    shadersMap["memory_expire"] = gl::GlslProg(loadResource( RES_EXPIRE_VERT ), loadResource( RES_EXPIRE_FRAG ));
+    shadersMap["pass"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_PASS_FRAG ));
     
     // visuals
     // ------
@@ -363,10 +391,16 @@ void SkelsApp::setup()
     v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsExpire(3, "vis_expire", &(texturesMap["l1_item1"]), &shadersMap));
+    v.reset(new VisualsExpire(3, "vis_expire", &(texturesMap["l1_item1"]), &shadersMap, &(surfacesMap["l1_item1"])));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsCollect(4, "vis_collect", &(texturesMap["l1_item1"]), &shadersMap));
+    v.reset(new VisualsCollect(4, "vis_collect_l1i1", &(texturesMap["l1_item1"]), &shadersMap));
+    visualsMap[v->name] = v;
+    
+    v.reset(new VisualsCollect(5, "vis_collect_l2i1", &(texturesMap["l2_item1"]), &shadersMap));
+    visualsMap[v->name] = v;
+    
+    v.reset(new VisualsCollect(6, "vis_collect_l2i2", &(texturesMap["l2_item2"]), &shadersMap));
     visualsMap[v->name] = v;
 	
 	
@@ -699,10 +733,9 @@ void SkelsApp::draw()
 			renderBackground();
 			
 			gl::color(Color(1.0f, 1.0f, .0f));
+            
 			gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
 			gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
-			
-			
 			
 			if(state == SK_TRACKING)
 			{
@@ -877,6 +910,7 @@ void SkelsApp::shutdown()
     if(setting_useKinect)
         _manager->destroyAll();
     
+    delete flickr;
     
 	delete oscManager;
 }

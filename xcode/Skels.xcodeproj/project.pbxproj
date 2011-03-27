@@ -41,6 +41,8 @@
 		667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */; };
 		6699B9A413283F4300B259FF /* Events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6699B9A313283F4300B259FF /* Events.cpp */; };
 		66E2ED72133E8D2F00102B6D /* expire_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED71133E8D2F00102B6D /* expire_frag.glsl */; };
+		66E2ED7A133E945C00102B6D /* expire_vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED79133E945C00102B6D /* expire_vert.glsl */; };
+		66E2ED7C133EB0EF00102B6D /* pass_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED7B133EB0EE00102B6D /* pass_frag.glsl */; };
 		66E3B54D13076045003958D5 /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B54C13076045003958D5 /* World.cpp */; };
 		66E3B59813077473003958D5 /* Obj3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B59713077473003958D5 /* Obj3D.cpp */; };
 		66F55466133D4DA600E7771E /* pic2.png in Resources */ = {isa = PBXBuildFile; fileRef = 66F55464133D4DA600E7771E /* pic2.png */; };
@@ -139,6 +141,8 @@
 		66325E3312FCEF3500E95797 /* VOpenNIUser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VOpenNIUser.cpp; sourceTree = "<group>"; };
 		66325E8C12FDF81200E95797 /* Skels_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Skels_Prefix.pch; sourceTree = "<group>"; };
 		66325E8D12FDF81700E95797 /* SkelsApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkelsApp.cpp; path = ../src/SkelsApp.cpp; sourceTree = SOURCE_ROOT; };
+		66540FE2133FE3990068FD5B /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../include/common.h; sourceTree = "<group>"; };
+		66540FE3133FE3990068FD5B /* FlickrGen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FlickrGen.h; path = ../include/FlickrGen.h; sourceTree = "<group>"; };
 		66580570133412630022435A /* Sounds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Sounds.cpp; path = ../src/Sounds.cpp; sourceTree = "<group>"; };
 		66580573133412970022435A /* Sounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sounds.h; path = ../include/Sounds.h; sourceTree = "<group>"; };
 		66580577133417E10022435A /* libfmodex.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libfmodex.dylib; sourceTree = "<group>"; };
@@ -160,9 +164,10 @@
 		6699B9A313283F4300B259FF /* Events.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Events.cpp; path = ../src/Events.cpp; sourceTree = SOURCE_ROOT; };
 		6699B9A513284C2300B259FF /* Visuals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Visuals.h; path = ../include/Visuals.h; sourceTree = SOURCE_ROOT; };
 		66E2ED71133E8D2F00102B6D /* expire_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = expire_frag.glsl; path = ../resources/expire_frag.glsl; sourceTree = "<group>"; };
+		66E2ED79133E945C00102B6D /* expire_vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = expire_vert.glsl; path = ../resources/expire_vert.glsl; sourceTree = "<group>"; };
+		66E2ED7B133EB0EE00102B6D /* pass_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pass_frag.glsl; path = ../resources/pass_frag.glsl; sourceTree = "<group>"; };
 		66E3B54B1307603C003958D5 /* World.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = World.h; path = ../include/World.h; sourceTree = SOURCE_ROOT; };
 		66E3B54C13076045003958D5 /* World.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = World.cpp; path = ../src/World.cpp; sourceTree = SOURCE_ROOT; };
-		66E3B5521307645A003958D5 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
 		66E3B55413076863003958D5 /* Player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../include/Player.h; sourceTree = SOURCE_ROOT; };
 		66E3B59713077473003958D5 /* Obj3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Obj3D.cpp; path = ../src/Obj3D.cpp; sourceTree = SOURCE_ROOT; };
 		66F55464133D4DA600E7771E /* pic2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pic2.png; path = ../resources/pic2.png; sourceTree = "<group>"; };
@@ -267,8 +272,9 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				66540FE2133FE3990068FD5B /* common.h */,
+				66540FE3133FE3990068FD5B /* FlickrGen.h */,
 				66580573133412970022435A /* Sounds.h */,
-				66E3B5521307645A003958D5 /* common.h */,
 				66E3B54B1307603C003958D5 /* World.h */,
 				66674DF11304ADCD004CFE8F /* Obj3D.h */,
 				66674DF21304ADCD004CFE8F /* OscManager.h */,
@@ -287,8 +293,10 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				66E2ED79133E945C00102B6D /* expire_vert.glsl */,
 				66E2ED71133E8D2F00102B6D /* expire_frag.glsl */,
 				66F55472133D4F5500E7771E /* mem_frag.glsl */,
+				66E2ED7B133EB0EE00102B6D /* pass_frag.glsl */,
 				66F55473133D4F5500E7771E /* pass_vert.glsl */,
 				66F5546E133D4EEF00E7771E /* blur_frag.glsl */,
 				66F5546F133D4EEF00E7771E /* blur_vert.glsl */,
@@ -549,6 +557,8 @@
 				66F55474133D4F5500E7771E /* mem_frag.glsl in Resources */,
 				66F55475133D4F5500E7771E /* pass_vert.glsl in Resources */,
 				66E2ED72133E8D2F00102B6D /* expire_frag.glsl in Resources */,
+				66E2ED7A133E945C00102B6D /* expire_vert.glsl in Resources */,
+				66E2ED7C133EB0EF00102B6D /* pass_frag.glsl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -620,13 +630,17 @@
 					/Users/holz/apps/fmod/lib,
 					"\"$(DEVELOPER_DIR)-old/FMOD Programmers API Mac/api/lib\"",
 					"\"$(SRCROOT)/../lib\"",
+					/usr/local/lib,
+					/opt/local/lib,
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"\"$(CINDER_PATH)/blocks/osc/lib/macosx/osc.a\"",
 					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
 				);
 				PRODUCT_NAME = Skels;
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/blocks/osc/include\" \"$(CINDER_PATH)/include\" ../include /Users/holz/apps/fmod/inc";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/blocks/osc/include\" \"$(CINDER_PATH)/include\" ../include /Users/holz/apps/fmod/inc /usr/local/include /opt/local/include/libxml2";
+				VALID_ARCHS = i386;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -654,13 +668,17 @@
 					/Users/holz/apps/fmod/lib,
 					"\"$(DEVELOPER_DIR)-old/FMOD Programmers API Mac/api/lib\"",
 					"\"$(SRCROOT)/../lib\"",
+					/usr/local/lib,
+					/opt/local/lib,
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"\"$(CINDER_PATH)/lib/libcinder.a\"",
 					"-lcurl",
 				);
 				PRODUCT_NAME = Skels;
 				STRIP_INSTALLED_PRODUCT = YES;
+				VALID_ARCHS = i386;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
