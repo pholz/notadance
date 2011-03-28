@@ -20,6 +20,7 @@
 #include "cinder/Surface.h"
 #include "cinder/Rand.h"
 #include "cinder/ImageIo.h"
+#include "cinder/Text.h"
 #include "cinder/gl/GlslProg.h"
 #include "VOpenNIHeaders.h"
 #include <sstream>
@@ -59,7 +60,8 @@ enum AppState
 	SK_TRACKING,
 	SK_KEYBOARD,
 	SK_CLEARING_LEVEL,
-	SK_SHUTDOWN
+	SK_SHUTDOWN,
+    SK_INTRO
 };
 
 class SkelsApp : public AppBasic 
@@ -161,7 +163,7 @@ public:	// Members
 	float mParam_velThreshold;
 	
 	// fonts, layouts
-	Font helvetica, helvetica48;
+	Font helvetica, helveticaB, helvetica32, helveticaB32, helvetica48;
 	
 	queue<Vec3f> objectLocations;
 	
@@ -279,6 +281,9 @@ void SkelsApp::setup()
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
 	
 	helvetica = Font("Helvetica", 24) ;
+    helvetica32 = Font("Helvetica", 32) ;
+    helveticaB = Font("Helvetica Bold", 24) ;
+    helveticaB32 = Font("Helvetica Bold", 32) ;
 	helvetica48 = Font("Helvetica Bold", 48) ;
 	
 	// init camera
@@ -406,7 +411,8 @@ void SkelsApp::setup()
 	
 	// state mgmt
 	// ---------------------------------------------------------------------------
-	enterState(SK_DETECTING);
+    enterState(SK_INTRO);
+    //	enterState(SK_DETECTING);
 	
 	bDebugMode = DEBUGMODE;
 	
@@ -457,11 +463,19 @@ void SkelsApp::mouseDown( MouseEvent event )
 
 void SkelsApp::update()
 {	
+    
+    
 	// timing
 	// ---------------------------------------------------------------------------
 	float now = getElapsedSeconds();
 	float dt = now - lastUpdate;
 	lastUpdate = now;
+    
+    
+    /// INTRO
+    if(state == SK_INTRO)
+        return;
+    
     
     oscManager->receive();
 	
@@ -827,7 +841,29 @@ void SkelsApp::draw()
 	// regardless of debug mode
 	// ---------------------------------------------------------------------------
 	if(state != SK_TRACKING && state != SK_KEYBOARD)
-		gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+    {
+        if(state == SK_INTRO)
+        {
+            
+            TextLayout tl;
+            tl.setFont(helveticaB32);
+            tl.setColor(Color(1.0f, 1.0f, 1.0f));
+            tl.setLeadingOffset(45.0f);
+            tl.addLine("welcome to the cave of fading memories.");
+            tl.setFont(helvetica);
+            tl.setLeadingOffset(25.0f);
+            tl.addLine("this is where memories lie, in the dark, awaiting oblivion.");
+            tl.addLine("don't let that happen. you can't see here but you can hear the memories.");
+            tl.addLine("they sound like music, but they are getting more distorted all the time.");
+            tl.setFont(helveticaB);
+            tl.addLine("find them in time, and you will keep them alive a little longer!");
+            gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/6, HEIGHT/4));
+        }
+        else
+        {
+            gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+        }
+    }
 	
 }
 
@@ -846,17 +882,25 @@ void SkelsApp::keyDown( KeyEvent event )
     
     else if( event.getChar() == ' ' )
 	{
-		oscManager->send("/skels/start", 1.0f);
-        center.setActive(true);
         
-        vector<ObjPtr>::iterator obit;
-        for(obit = world.things.begin(); obit != world.things.end(); obit++)
+        if(state == SK_INTRO)
         {
-            ObjPtr obj = *obit;
+            enterState(SK_DETECTING);
+        }
+        else
+        {
+            oscManager->send("/skels/start", 1.0f);
+            center.setActive(true);
             
-            obj->setActive(true);
-            if(obj->soundActive)
-                oscManager->send("/skels/event/objon", obj->objID, 1);
+            vector<ObjPtr>::iterator obit;
+            for(obit = world.things.begin(); obit != world.things.end(); obit++)
+            {
+                ObjPtr obj = *obit;
+                
+                obj->setActive(true);
+                if(obj->soundActive)
+                    oscManager->send("/skels/event/objon", obj->objID, 1);
+            }
         }
         
 	}
