@@ -43,7 +43,7 @@
 #define OSC_RECEIVE_PORT 3000
 #define DEBUGMODE true
 #define OBJ_ID_EXIT 6
-#define SOUND_ON 1
+#define SOUND_ON 0
 
 #define NULLVEC Vec3f(.0f, .0f, .0f)
 
@@ -130,11 +130,15 @@ public:	// Members
 	
 	// objects, coordinates, world
 	Obj3D center, leftHand, rightHand, lastCenter;
-	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm, kb_facing;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm, kb_facing, headrot;
+    
+    float confidenceLH, confidenceRH, confidenceCenter;
 	float lx, ly, lz, rot;
+	int drawJoint;
 	World world;
 	GameState gameState;
 	vector<Vec3f> joints;
+	vector<float> confs;
 	
 	// cam & timing
 	CameraPersp cam;
@@ -161,6 +165,9 @@ public:	// Members
 	float mParam_collectDistance;
 	float mParam_zArmAdjust;
 	float mParam_velThreshold;
+    float mParam_nearClip;
+    float mParam_farClip;
+    float mParam_armYMoveThresh;
 	
 	// fonts, layouts
 	Font helvetica, helveticaB, helvetica32, helveticaB32, helvetica48;
@@ -181,7 +188,7 @@ public:	// Members
     
     // FMOD
     
-   // Sounds sounds;
+    Sounds sounds;
     
     
     // SETTINGS
@@ -259,7 +266,12 @@ void SkelsApp::setup()
 	
 	mParam_collectDistance =		200.0f;
 	mParam_zArmAdjust =				16.0f;
-	mParam_velThreshold =			160.0f;
+	mParam_velThreshold =			30.0f;
+    
+    mParam_nearClip =               0.0f;
+    mParam_farClip =                1000.0f;
+    
+    mParam_armYMoveThresh =         -10.0f;
 	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
@@ -279,6 +291,15 @@ void SkelsApp::setup()
 	mParams.addParam( "velThreshold",		&mParam_velThreshold,	"min=0.0 max=1000.0 step=1.0" );
 	
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
+    
+    mParams.addParam( "nearClip",           &mParam_nearClip,       "min=0.0 max=10000.0 step=1.0" );
+    mParams.addParam( "farClip",            &mParam_farClip,        "min=0.0 max=10000.0 step=1.0" );
+    
+    mParams.addParam( "armYMoveThresh",     &mParam_armYMoveThresh, "min=-500.0 max=500.0 step=1.0" );
+	
+	mParams.addParam( "drawJoint",     &drawJoint, "min=0 max=20 step=1" );
+    
+    
 	
 	helvetica = Font("Helvetica", 24) ;
     helvetica32 = Font("Helvetica", 32) ;
@@ -350,7 +371,7 @@ void SkelsApp::setup()
 	
 	// textures
     //.
-    flickr = new FlickrGen("pholz", setting_picsMode);
+    flickr = new FlickrGen("pholz", setting_picsMode, this);
     
     vector<gl::Texture>::iterator texit;
     
@@ -425,12 +446,15 @@ void SkelsApp::setup()
     // ----------------
     kb_facing = Vec3f(.0f, .0f, -500.0f);
     massCenter = NULLVEC;
+	headrot = NULLVEC;
     
+    confidenceLH = confidenceRH = confidenceCenter = .0f;
+	drawJoint = 0;
     
-   // SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
-    
-   // objectsMap["l1_item1"]->setSound(s);
-    
+	if(SOUND_ON){
+		SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
+		objectsMap["l1_item1"]->setSound(s);
+    }
 
 }
 
@@ -470,6 +494,8 @@ void SkelsApp::update()
 	float now = getElapsedSeconds();
 	float dt = now - lastUpdate;
 	lastUpdate = now;
+	
+	
     
     
     /// INTRO
@@ -484,7 +510,7 @@ void SkelsApp::update()
     if(setting_useKinect)
     {
         mColorTex.update( getColorImage() );
-        mDepthTex.update( getDepthImage24() );	// Histogram
+        mDepthTex.update( getDepthImage() );	// Histogram
         
         if( _manager->hasUsers() && _manager->hasUser(1) ) mOneUserTex.update( getUserColorImage(1) );
     }
@@ -517,6 +543,8 @@ void SkelsApp::update()
 		{
 			enterState(SK_TRACKING);
 		}
+        
+        _device0->setLimits(mParam_nearClip, mParam_farClip);
 		
 		center.update(dt);
 
@@ -526,6 +554,7 @@ void SkelsApp::update()
 			V::UserBoneList boneList = _manager->getUser(1)->getBoneList();
 			
 			if(boneList.size() != joints.size()) joints = vector<Vec3f>(boneList.size());
+			if(boneList.size() != confs.size()) confs = vector<float>(boneList.size());
 			
 			V::UserBoneList::iterator boneIt;
 			int idx = 0;
@@ -533,6 +562,8 @@ void SkelsApp::update()
 			{
 				
 				V::OpenNIBone &bone = *(*boneIt);
+				
+				//console() << idx << " pos cnf " << bone.positionConfidence << " ori cnf " << bone.orientationConfidence << endl;
 
 				XnPoint3D point;
 				XnPoint3D realJointPos;
@@ -542,18 +573,24 @@ void SkelsApp::update()
 				depth->ConvertRealWorldToProjective( 1, &realJointPos, &point );
 				
 				
-				console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
+			//	console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
 
 				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, 
 								  HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, 
 								  mParam_zMax/2 + (point.Z - mParam_zCenter) * mParam_scaleZ);
 				
+				// 0 head
 				// 11, 5 shoulders
 				// 4 center
 				// 10, 15 hands
+				if(idx == 0)
+				{
+					headrot = Vec3f(bone.orientation[0], bone.orientation[1], bone.orientation[2]);
+				}
 				if(idx == 4) 
 				{
 					massCenter = pos - windowCenter;
+					confidenceCenter = bone.positionConfidence;
 					
 				}
 				if(idx == 10) 
@@ -561,12 +598,15 @@ void SkelsApp::update()
 					// adjust the z bias of arms to body depending on how much we are facing fwd or back. if back, take the double to account for the nonlinear distance estimation
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffLeftHand = val - windowCenter - massCenter;
+					confidenceLH = bone.positionConfidence;
 					
 				}
 				if(idx == 15)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRightHand = val -windowCenter - massCenter;
+					confidenceRH = bone.positionConfidence;
+					
 					lx = pos.x;
 					ly = pos.y;
 					lz = pos.z;
@@ -582,6 +622,7 @@ void SkelsApp::update()
 					
 				
 				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, .0f, 1.0f);
+				confs[idx] = bone.positionConfidence;
 			}
 			
 		}
@@ -596,9 +637,25 @@ void SkelsApp::update()
 	diffLeftHand.z = math<float>::clamp(diffLeftHand.z, -clmp, clmp);
 	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
 	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
+     
+	float maxrot = ((rot/M_PI)*-1.0f+1.0f)/2.0f;
 	
+	if(diffRightHand.z > 10.0f 
+	   && math<float>::abs(diffRightHand.x) < 70.0f
+	   && maxrot > 0.35f && maxrot < 0.65f ) 
+		diffRightHand.y = - 50.0f;
+	
+	if(diffLeftHand.z > 10.0f 
+	   && math<float>::abs(diffLeftHand.x) < 70.0f
+	   && maxrot > 0.35f && maxrot < 0.65f ) 
+		diffLeftHand.y = - 50.0f;
+	
+	
+	
+    // if arms are too close or too low, don't register it as a move gesture
 	Vec3f totaldiff = diffLeftHand + diffRightHand;
-	if(totaldiff.length() < mParam_velThreshold) totaldiff = Vec3f();
+	if(totaldiff.length() < mParam_velThreshold || (diffRightHand.y < mParam_armYMoveThresh || diffLeftHand.y < mParam_armYMoveThresh))
+        totaldiff = Vec3f();
 
 	if(state == SK_TRACKING)
 	{
@@ -609,6 +666,8 @@ void SkelsApp::update()
 	}
 	
 	rot = math<float>::atan2(shoulders.z, shoulders.x);
+	
+	rot = math<float>::floor(rot*100.0f + 0.5f)/100.0f;
 
 	shoulders.y = .0f;
 
@@ -616,7 +675,13 @@ void SkelsApp::update()
 	shoulders_norm = shoulders.normalized();
 	shoulders_norm.rotateY(M_PI_2);
 	shoulders_norm.normalize();
-
+	
+	
+	// SOUNDS
+	if(SOUND_ON){
+		sounds.system->update();
+		sounds.updateListener(center.pos, center.vel, shoulders_norm, Vec3f(.0f, 1.0f, .0f));
+	}
 	
 	// send OSC updates to Max
 	// ---------------------------------------------------------------------------
@@ -625,6 +690,14 @@ void SkelsApp::update()
 	oscManager->send("/skels/center/z", center.pos.z);
 	oscManager->send("/skels/center/vel", center.vel.length());
 	oscManager->send("/skels/rot", rot);
+	oscManager->send("/skels/headrot", math<float>::atan2(headrot.z, headrot.x));
+    
+    oscManager->send("/skels/dbg/diffLeftHand/x", diffLeftHand.x);
+    oscManager->send("/skels/dbg/diffLeftHand/y", diffLeftHand.y);
+    oscManager->send("/skels/dbg/diffLeftHand/z", diffLeftHand.z);
+    oscManager->send("/skels/dbg/diffRightHand/x", diffRightHand.x);
+    oscManager->send("/skels/dbg/diffRightHand/y", diffRightHand.y);
+    oscManager->send("/skels/dbg/diffRightHand/z", diffRightHand.z); 
 	
 	// world
 	// ---------------------------------------------------------------------------
@@ -759,18 +832,23 @@ void SkelsApp::draw()
 				int idx = 0;
 				for(it = joints.begin(); it != joints.end(); it++, idx++)
 				{
-					gl::color(Color(1.0f, .0f, .0f));
+					if(confs[idx])
+						gl::color(Color(.0f, 1.0f, .0f));
+					else
+						gl::color(Color(1.0f, .0f, .0f));
+					
 					float rad = 7.0f;
-					if(idx == 10 || idx == 15) gl::color(Color(.0f, 1.0f, .0f));
+					if(idx == 10 || idx == 15) {}//gl::color(Color(.0f, 1.0f, .0f));
 					else if(idx == 4) {
-							gl::color(Color(1.0f, .0f, 1.0f));
+//							gl::color(Color(1.0f, .0f, 1.0f));
 						rad = 10.0f;
 					}
-					else continue;
-					gl::drawSphere(*it, rad, 32);
-					//stringstream ss;
-					//ss << idx;
-					//gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
+	//				else continue;
+					if(drawJoint == idx)
+						gl::drawSphere(*it, rad, 32);
+				//	stringstream ss;
+			//		ss << idx;
+			//		gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
 				}
 			}
 				
@@ -787,8 +865,8 @@ void SkelsApp::draw()
         
 		if(setting_useKinect)
         {
-            float sx = 320/2;
-            float sy = 240/2;
+            float sx = 320;
+            float sy = 240;
             float xoff = 10;
             float yoff = 10;
             
@@ -796,13 +874,46 @@ void SkelsApp::draw()
             gl::color( cinder::ColorA(1, 1, 1, 1) );
             gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
             gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
+            gl::draw( mOneUserTex, Rectf( xoff+sx*2, yoff, xoff+sx*3, yoff+sy) );
             glDisable( GL_TEXTURE_2D );
         }
 		
 		// debug params
 		// ---------------------------------------------------------------------------
 		params::InterfaceGl::draw();
+        
+		TextLayout tl, tr;
+		tl.setColor(Color(1.0f, 1.0f, 1.0f));
+		tl.setFont(helvetica32);
+		tr.setColor(Color(1.0f, 1.0f, 1.0f));
+		tr.setFont(helvetica32);
+
+
 		
+		stringstream ss, ss2;
+		ss << math<float>::atan2(headrot.z, headrot.x) << " ''' " << rot;//center.vel.length();
+		gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT-HEIGHT/5), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica32);
+		
+		
+		ss2 << diffLeftHand;
+		tl.addLine(ss2.str());
+		ss2.str("");
+		
+		ss2 << confidenceLH;
+		tl.addLine(ss2.str());
+		ss2.str("");
+		
+		ss2 << diffRightHand;
+		tr.addRightLine(ss2.str());
+		ss2.str("");
+		
+		ss2 << confidenceRH;
+		tr.addRightLine(ss2.str());
+		ss2.str("");
+		
+		
+		gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));
+		gl::draw(gl::Texture(tr.render()), Vec2f(WIDTH-WIDTH/2+WIDTH/8, HEIGHT-HEIGHT/6));
 	} // endif debug mode
 	
 	
@@ -849,14 +960,14 @@ void SkelsApp::draw()
             tl.setFont(helveticaB32);
             tl.setColor(Color(1.0f, 1.0f, 1.0f));
             tl.setLeadingOffset(45.0f);
-            tl.addLine("welcome to the cave of fading memories.");
-            tl.setFont(helvetica);
-            tl.setLeadingOffset(25.0f);
-            tl.addLine("this is where memories lie, in the dark, awaiting oblivion.");
-            tl.addLine("don't let that happen. you can't see here but you can hear the memories.");
-            tl.addLine("they sound like music, but they are getting more distorted all the time.");
-            tl.setFont(helveticaB);
-            tl.addLine("find them in time, and you will keep them alive a little longer!");
+//            tl.addLine("welcome to the memory dump.");
+//            tl.setFont(helvetica);
+//            tl.setLeadingOffset(25.0f);
+//            tl.addLine("this is where memories lie, in the dark, awaiting oblivion.");
+//            tl.addLine("don't let that happen. you can't see here but you can hear the memories.");
+//            tl.addLine("they sound like music, but they are getting more distorted all the time.");
+//            tl.setFont(helveticaB);
+//            tl.addLine("find them in time, and you will keep them alive a little longer!");
             gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/6, HEIGHT/4));
         }
         else

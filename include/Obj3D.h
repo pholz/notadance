@@ -110,14 +110,14 @@ public:
             
             expired += dt;
             
-//            if(hasSound)
-//            {
-//                FMOD_VECTOR fpos = fmodvector(pos * .01f);
-//                
-//                FMOD_VECTOR fvel = fmodvector(vel * .01f);
-//                
-//                FMOD_RESULT result = sound->channel->set3DAttributes(&fpos, &fvel);
-//            }
+            if(hasSound)
+            {
+                FMOD_VECTOR fpos = fmodvector(pos * .01f);
+                
+                FMOD_VECTOR fvel = fmodvector(vel * .01f);
+                
+                FMOD_RESULT result = sound->channel->set3DAttributes(&fpos, &fvel);
+            }
         }
 	}
 	

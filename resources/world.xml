@@ -7,7 +7,7 @@
             <z>1000</z>
         </pos>
         <active>1</active>
-        <lifetime>50</lifetime>
+        <lifetime>200</lifetime>
     </object>
     <object>
         <id>2</id>

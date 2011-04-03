@@ -45,6 +45,7 @@
 		66E2ED7C133EB0EF00102B6D /* pass_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED7B133EB0EE00102B6D /* pass_frag.glsl */; };
 		66E3B54D13076045003958D5 /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B54C13076045003958D5 /* World.cpp */; };
 		66E3B59813077473003958D5 /* Obj3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66E3B59713077473003958D5 /* Obj3D.cpp */; };
+		66F3ABBD1340FEEE005CAE12 /* FlickrGen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66F3ABBC1340FEEE005CAE12 /* FlickrGen.cpp */; };
 		66F55466133D4DA600E7771E /* pic2.png in Resources */ = {isa = PBXBuildFile; fileRef = 66F55464133D4DA600E7771E /* pic2.png */; };
 		66F55467133D4DA600E7771E /* pic3.png in Resources */ = {isa = PBXBuildFile; fileRef = 66F55465133D4DA600E7771E /* pic3.png */; };
 		66F55470133D4EEF00E7771E /* blur_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66F5546E133D4EEF00E7771E /* blur_frag.glsl */; };
@@ -170,6 +171,7 @@
 		66E3B54C13076045003958D5 /* World.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = World.cpp; path = ../src/World.cpp; sourceTree = SOURCE_ROOT; };
 		66E3B55413076863003958D5 /* Player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../include/Player.h; sourceTree = SOURCE_ROOT; };
 		66E3B59713077473003958D5 /* Obj3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Obj3D.cpp; path = ../src/Obj3D.cpp; sourceTree = SOURCE_ROOT; };
+		66F3ABBC1340FEEE005CAE12 /* FlickrGen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FlickrGen.cpp; path = ../src/FlickrGen.cpp; sourceTree = "<group>"; };
 		66F55464133D4DA600E7771E /* pic2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pic2.png; path = ../resources/pic2.png; sourceTree = "<group>"; };
 		66F55465133D4DA600E7771E /* pic3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pic3.png; path = ../resources/pic3.png; sourceTree = "<group>"; };
 		66F5546E133D4EEF00E7771E /* blur_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = blur_frag.glsl; path = ../resources/blur_frag.glsl; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 				6699B9A313283F4300B259FF /* Events.cpp */,
 				667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */,
 				66580570133412630022435A /* Sounds.cpp */,
+				66F3ABBC1340FEEE005CAE12 /* FlickrGen.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -602,6 +605,7 @@
 				6699B9A413283F4300B259FF /* Events.cpp in Sources */,
 				667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */,
 				66580572133412630022435A /* Sounds.cpp in Sources */,
+				66F3ABBD1340FEEE005CAE12 /* FlickrGen.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
