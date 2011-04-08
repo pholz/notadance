@@ -15,6 +15,7 @@
 #include "OscSender.h"
 #include <string>
 #include <cstdarg>
+#include <vector>
 
 #define TYPE_SPECTRUM 0
 #define TYPE_WAVEFORM 1
@@ -72,6 +73,34 @@ public:
 		message.setAddress(address);
 		message.setRemoteEndpoint(m_send_host, m_send_port);
 		sender.sendMessage(message);
+	}
+	
+	void send(string address, vector<int> &iv)
+	{
+		osc::Bundle bundle;
+		
+
+		
+		
+		string s = "";
+		
+		vector<int>::iterator it;
+		for(it = iv.begin(); it != iv.end(); it++)
+		{
+			s += (char) *it;
+			if(strlen(s.c_str()) == 1920)
+			{
+				osc::Message message;
+				message.setAddress(address);
+				message.setRemoteEndpoint(m_send_host, m_send_port);
+				message.addStringArg(s);
+				bundle.addMessage(message);
+				s = "";
+			}
+		}
+		
+		sender.sendBundle(bundle);
+		
 	}
     
     void receive()

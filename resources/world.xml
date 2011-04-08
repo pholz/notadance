@@ -182,7 +182,7 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-            <objectname>l2_item1</objectname>
+           <!-- <objectname>l2_item1</objectname> -->
             <objectname>l2_item2</objectname>
         </nextobjects>
         
@@ -198,7 +198,7 @@
         </deactivatevisuals>
         
     </event>
-    
+    <!--
     <event>
         
         <objectname>l2_item1</objectname>
@@ -219,6 +219,7 @@
         </deactivatevisuals>
         
     </event>
+	 -->
     
     <event>
         

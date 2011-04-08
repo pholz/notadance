@@ -372,6 +372,11 @@ void SkelsApp::setup()
 	// textures
     //.
     flickr = new FlickrGen("pholz", setting_picsMode, this);
+	
+	
+	// send pic data for generative stuff
+	
+	// init vis textures
     
     vector<gl::Texture>::iterator texit;
     

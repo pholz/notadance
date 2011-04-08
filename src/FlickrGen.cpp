@@ -24,16 +24,32 @@ void FlickrGen::init()
     
     if(mode == SK_USERPICS)
     {
+		Surface surf = loadImage(app->getResourcePath("pic1.png"));
+		
+		writeImage("/Users/holz/Desktop/TEEEST.png", surf);
+		
+		/*
+		vector<int> vec0;
+
+		int step_h =  surf.getWidth()/160;
+		int step_v = surf.getHeight()/120;
+		for(int i = 0; i < surf.getWidth(); i += step_h)
+		{
+			for(int j = 0; j < surf.getHeight(); j += step_v)
+			{
+				Color8u c = surf.areaAverage(Area(i, j, i + step_h, j + step_v));
+				uint8_t b = (c.r + c.g + c.b) / 3;
+				vec0.push_back(b);
+			}
+		}
+		
+		bvals.push_back(vec0);
+		*/
+		
+		
         textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic1.png"))));
         textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic2.png"))));
         textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic3.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic1.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic2.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic3.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic1.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic2.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic3.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic1.png"))));
     }
     else
     {

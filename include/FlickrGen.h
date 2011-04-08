@@ -48,4 +48,5 @@ public:
     Rand *rand;
     int mode;
     app::App *app;
+	vector< vector<int> > bvals;
 };
