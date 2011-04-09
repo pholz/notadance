@@ -64,6 +64,7 @@ public:
         doesExpire = false;
         active = false;
         expired = lifetime = .0f;
+		type = 0;
 	}
     
     void setLifetime(float lt)
@@ -141,6 +142,7 @@ public:
     SndPtr          sound;
     bool            hasSound, doesExpire;
     float           lifetime, expired;
+	int				type; // 0 = memory, 1 = other
 	
 };
 

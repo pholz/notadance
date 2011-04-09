@@ -1,4 +1,5 @@
 #include "FlickrGen.h"
+#include <sstream>
 
 FlickrGen::FlickrGen(string _name, int _mode, app::App *_app)
 {
@@ -24,32 +25,25 @@ void FlickrGen::init()
     
     if(mode == SK_USERPICS)
     {
-		Surface surf = loadImage(app->getResourcePath("pic1.png"));
+		string pics[] = { "pic1.png", "pic2.png", "pic3.png"};
+		Surface surfs[3];
 		
-		writeImage("/Users/holz/Desktop/TEEEST.png", surf);
+		string path = "/Users/holz/Documents/maxpat/media/tmp/";
 		
-		/*
-		vector<int> vec0;
-
-		int step_h =  surf.getWidth()/160;
-		int step_v = surf.getHeight()/120;
-		for(int i = 0; i < surf.getWidth(); i += step_h)
+		for(int i = 0; i < 3; i++)
 		{
-			for(int j = 0; j < surf.getHeight(); j += step_v)
-			{
-				Color8u c = surf.areaAverage(Area(i, j, i + step_h, j + step_v));
-				uint8_t b = (c.r + c.g + c.b) / 3;
-				vec0.push_back(b);
-			}
+			Surface surf = loadImage(app->getResourcePath(pics[i]));
+			stringstream ss; ss << path << pics[i];
+			writeImage(ss.str(), surf);
+			surfs[i] = surf;
 		}
 		
-		bvals.push_back(vec0);
-		*/
 		
-		
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic1.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic2.png"))));
-        textures.push_back(gl::Texture(loadImage(app->getResourcePath("pic3.png"))));
+		for(int i = 0; i < 10; i++)
+		{
+			textures.push_back(gl::Texture(surfs[i%3]));
+			names.push_back(pics[i%3]);
+		}
     }
     else
     {

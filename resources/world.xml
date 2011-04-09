@@ -7,6 +7,7 @@
             <z>1000</z>
         </pos>
         <active>1</active>
+		<type>0</type>
         <lifetime>200</lifetime>
     </object>
     <object>
@@ -17,6 +18,7 @@
             <z>-1400</z>
         </pos>
         <active>0</active>
+		<type>1</type>
     </object>
     
     <object>
@@ -27,6 +29,7 @@
             <z>200</z>
         </pos>
         <active>0</active>
+		<type>0</type>
     </object>
     
     <object>
@@ -37,6 +40,7 @@
             <z>-1400</z>
         </pos>
         <active>0</active>
+		<type>0</type>
     </object>
     
     <object>
@@ -47,6 +51,7 @@
             <z>-1600</z>
         </pos>
         <active>0</active>
+		<type>1</type>
     </object>
 </objects>
     

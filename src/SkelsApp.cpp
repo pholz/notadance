@@ -344,12 +344,14 @@ void SkelsApp::setup()
         float xX = objxIt->getChild("pos/x").getValue<float>();
         float xZ = objxIt->getChild("pos/z").getValue<float>();
         int xActive = objxIt->getChild("active").getValue<int>();
+		int xType = objxIt->getChild("type").getValue<int>();
         
         
         float xLt = objxIt->hasChild("lifetime") ? objxIt->getChild("lifetime").getValue<float>() : .0f;
         
         o.reset(new Obj3D(xId, xName, Vec3f(xX, .0f, xZ)));
         o->setSoundActive((bool) xActive);
+		o->type = xType;
         if(xLt != .0f) o->setLifetime(xLt);
         oscManager->send("/skels/event/objon", o->objID, 0);
         world.addObject(o);
@@ -376,25 +378,41 @@ void SkelsApp::setup()
 	
 	// send pic data for generative stuff
 	
+	vector<ObjPtr> memories;
+	
+	vector<ObjPtr>::iterator oit;
+	for(oit = world.things.begin(); oit != world.things.end(); oit++)
+	{
+		if( (*oit)->type == 0 ) memories.push_back( (*oit) );
+	}
+	
+	// for each memory, send id and image name to max, and assign texture to the textures map for this object
+	// (will then be used by visuals)
+	for(int i = 0; i < memories.size(); i++)
+	{
+		oscManager->send("/skels/pixels", memories[i]->objID, flickr->names[i%flickr->names.size()]);
+		texturesMap[memories[i]->name].push_back(flickr->textures[i%flickr->textures.size()]);
+	}
+	
 	// init vis textures
     
-    vector<gl::Texture>::iterator texit;
-    
-    int i =0;
-    for(texit = flickr->textures.begin(); i < 3 && texit != flickr->textures.end(); texit++, i++)
-    {
-        texturesMap["l1_item1"].push_back(*texit);
-    }
-    
-    for( ; i < 6 && texit != flickr->textures.end(); texit++, i++)
-    {
-        texturesMap["l2_item1"].push_back(*texit);
-    }
-    
-    for( ; i < 9 && texit != flickr->textures.end(); texit++, i++)
-    {
-        texturesMap["l2_item2"].push_back(*texit);
-    }
+//    vector<gl::Texture>::iterator texit;
+//    
+//    int i =0;
+//    for(texit = flickr->textures.begin(); i < 3 && texit != flickr->textures.end(); texit++, i++)
+//    {
+//        texturesMap["l1_item1"].push_back(*texit);
+//    }
+//    
+//    for( ; i < 6 && texit != flickr->textures.end(); texit++, i++)
+//    {
+//        texturesMap["l2_item1"].push_back(*texit);
+//    }
+//    
+//    for( ; i < 9 && texit != flickr->textures.end(); texit++, i++)
+//    {
+//        texturesMap["l2_item2"].push_back(*texit);
+//    }
     
 //    ImageSourceRef img = loadImage( getResourcePath("pic1.png") );
 //    surfacesMap["l1_item1"].push_back(Surface( img ));

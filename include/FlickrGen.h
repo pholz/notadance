@@ -45,6 +45,7 @@ public:
     string username, userid;
     vector<Url> photourls;
     vector<gl::Texture> textures;
+	vector<string> names;
     Rand *rand;
     int mode;
     app::App *app;
