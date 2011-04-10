@@ -1,7 +1,7 @@
 <objects>
     <object>
         <id>1</id>
-        <name>l1_item1</name>
+        <name>item1</name>
         <pos>
             <x>1000</x>
             <z>1000</z>
@@ -12,7 +12,7 @@
     </object>
     <object>
         <id>2</id>
-        <name>l1_exit</name>
+        <name>exit2</name>
         <pos>
             <x>-900</x>
             <z>-1400</z>
@@ -23,7 +23,7 @@
     
     <object>
         <id>3</id>
-        <name>l2_item1</name>
+        <name>item3</name>
         <pos>
             <x>500</x>
             <z>200</z>
@@ -34,7 +34,7 @@
     
     <object>
         <id>4</id>
-        <name>l2_item2</name>
+        <name>exit4</name>
         <pos>
             <x>600</x>
             <z>-1400</z>
@@ -45,7 +45,7 @@
     
     <object>
         <id>5</id>
-        <name>l2_exit</name>
+        <name>item5</name>
         <pos>
             <x>1000</x>
             <z>-1600</z>
@@ -137,34 +137,34 @@
     
     <event>
         
-        <objectname>l1_item1</objectname>
+        <objectname>item1</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-            <objectname>l1_exit</objectname>
+            <objectname>exit2</objectname>
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect_l1i1</visualsname>
+            <visualsname>vis_collect_i1</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>l1_item1</objectname>
+            <objectname>item1</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
-            <visualsname>l1_vis_item1</visualsname>
+            <visualsname>vis_item1</visualsname>
         </deactivatevisuals>
         
     </event>
     
     <event>
         
-        <objectname>l1_item1</objectname>
+        <objectname>item1</objectname>
         <type>EVENT_EXPIRE</type>
         
         <nextobjects>
-            <objectname>l1_exit</objectname>
+            <objectname>exit2</objectname>
         </nextobjects>
         
         <nextvisuals>
@@ -172,31 +172,31 @@
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>l1_item1</objectname>
+            <objectname>item1</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
-            <visualsname>l1_vis_item1</visualsname>
+            <visualsname>vis_item1</visualsname>
         </deactivatevisuals>
         
     </event>
     
     <event>
         
-        <objectname>l1_exit</objectname>
+        <objectname>exit2</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
            <!-- <objectname>l2_item1</objectname> -->
-            <objectname>l2_item2</objectname>
+            <objectname>item3</objectname>
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>l1_vis_collect_exit</visualsname>
+            <visualsname>vis_collect_exit</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>l1_exit</objectname>
+            <objectname>exit2</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
@@ -228,19 +228,19 @@
     
     <event>
         
-        <objectname>l2_item2</objectname>
+        <objectname>item3</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-            <objectname>l2_exit</objectname>
+            <objectname>exit4</objectname>
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect_l2i2</visualsname>
+            <visualsname>vis_collect_i3</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>l2_item2</objectname>
+            <objectname>item3</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
@@ -250,7 +250,7 @@
     
     <event>
         
-        <objectname>l2_exit</objectname>
+        <objectname>exit4</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
@@ -260,7 +260,7 @@
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>l2_exit</objectname>
+            <objectname>exit4</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>

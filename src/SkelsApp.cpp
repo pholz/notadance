@@ -433,23 +433,23 @@ void SkelsApp::setup()
     // visuals
     // ------
     
-    VisPtr v(new VisualsItem1(1, "l1_vis_item1"));
+    VisPtr v(new VisualsItem1(1, "vis_item1"));
     visualsMap[v->name] = v;
     v->setActive(true);
     
     v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsExpire(3, "vis_expire", &(texturesMap["l1_item1"]), &shadersMap, &(surfacesMap["l1_item1"])));
+    v.reset(new VisualsExpire(3, "vis_expire", &(texturesMap["item1"]), &shadersMap, &(surfacesMap["l1_item1"])));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsCollect(4, "vis_collect_l1i1", &(texturesMap["l1_item1"]), &shadersMap));
+    v.reset(new VisualsCollect(4, "vis_collect_i1", &(texturesMap["item1"]), &shadersMap));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsCollect(5, "vis_collect_l2i1", &(texturesMap["l2_item1"]), &shadersMap));
+    v.reset(new VisualsCollect(5, "vis_collect_i3", &(texturesMap["item3"]), &shadersMap));
     visualsMap[v->name] = v;
     
-    v.reset(new VisualsCollect(6, "vis_collect_l2i2", &(texturesMap["l2_item2"]), &shadersMap));
+    v.reset(new VisualsCollect(6, "vis_collect_i5", &(texturesMap["item5"]), &shadersMap));
     visualsMap[v->name] = v;
 	
 	
