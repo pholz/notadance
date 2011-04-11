@@ -42,8 +42,9 @@
 #define OSC_SEND_PORT 9000
 #define OSC_RECEIVE_PORT 3000
 #define DEBUGMODE true
-#define OBJ_ID_EXIT 6
+#define OBJ_ID_EXIT 99
 #define SOUND_ON 0
+#define FRAMERATE 25
 
 #define NULLVEC Vec3f(.0f, .0f, .0f)
 
@@ -72,10 +73,8 @@ public:
 
 	static const int KINECT_COLOR_WIDTH = 640;	//1280;
 	static const int KINECT_COLOR_HEIGHT = 480;	//1024;
-	static const int KINECT_COLOR_FPS = 30;	//15;
 	static const int KINECT_DEPTH_WIDTH = 640;
 	static const int KINECT_DEPTH_HEIGHT = 480;
-	static const int KINECT_DEPTH_FPS = 30;
 
 	void prepareSettings(Settings* settings);
 	void setup();
@@ -87,6 +86,7 @@ public:
 	void renderBackground();
 	void shutdown();
 	void enterState(AppState s);
+	void startGame();
 	
 	ImageSourceRef getColorImage()
 	{
@@ -130,10 +130,10 @@ public:	// Members
 	
 	// objects, coordinates, world
 	Obj3D center, leftHand, rightHand, lastCenter;
-	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm, kb_facing, headrot;
+	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm, kb_facing, headrot, diffLElbow, diffRElbow;
     
     float confidenceLH, confidenceRH, confidenceCenter;
-	float lx, ly, lz, rot;
+	float lx, ly, lz, rot, maxrot;
 	int drawJoint;
 	World world;
 	GameState gameState;
@@ -148,6 +148,7 @@ public:	// Members
 	AppState state, lastState;
 	bool bDebugMode;
 	string global_debug;
+	bool game_running;
 	
 	// utils
 	OscManager* oscManager;
@@ -171,8 +172,6 @@ public:	// Members
 	
 	// fonts, layouts
 	Font helvetica, helveticaB, helvetica32, helveticaB32, helvetica48;
-	
-	queue<Vec3f> objectLocations;
 	
 	// events
 	
@@ -209,8 +208,10 @@ void SkelsApp::prepareSettings(Settings* settings)
 }
 
 void SkelsApp::setup()
-{
-
+{	
+	
+	this->setFrameRate(float(FRAMERATE));
+	game_running = false;
     setting_useKinect = true;
     setting_picsMode = 0;
     
@@ -437,6 +438,15 @@ void SkelsApp::setup()
     visualsMap[v->name] = v;
     v->setActive(true);
     
+	v.reset(new VisualsItem1(8, "vis_item3"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(9, "vis_item5"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(10, "vis_item6"));
+	visualsMap[v->name] = v;
+	
     v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
@@ -450,6 +460,9 @@ void SkelsApp::setup()
     visualsMap[v->name] = v;
     
     v.reset(new VisualsCollect(6, "vis_collect_i5", &(texturesMap["item5"]), &shadersMap));
+    visualsMap[v->name] = v;
+	
+	v.reset(new VisualsCollect(7, "vis_collect_i6", &(texturesMap["item6"]), &shadersMap));
     visualsMap[v->name] = v;
 	
 	
@@ -606,6 +619,34 @@ void SkelsApp::update()
 				// 11, 5 shoulders
 				// 4 center
 				// 10, 15 hands
+				
+				/*
+				 SKEL_HEAD = 0, 
+				 SKEL_NECK = 1, 
+				 SKEL_TORSO = 2, 
+				 SKEL_WAIST = 3, 
+				 SKEL_LEFT_COLLAR = 4, 
+				 SKEL_LEFT_SHOULDER = 5, 
+				 SKEL_LEFT_ELBOW = 6, 
+				 SKEL_LEFT_WRIST = 7, 
+				 SKEL_LEFT_HAND = 8, 
+				 SKEL_LEFT_FINGERTIP = 9, 
+				 SKEL_RIGHT_COLLAR = 10, 
+				 SKEL_RIGHT_SHOULDER = 11, 
+				 SKEL_RIGHT_ELBOW = 12, 
+				 SKEL_RIGHT_WRIST = 13, 
+				 SKEL_RIGHT_HAND = 14, 
+				 SKEL_RIGHT_FINGERTIP = 15, 
+				 SKEL_LEFT_HIP = 16, 
+				 SKEL_LEFT_KNEE = 17, 
+				 SKEL_LEFT_ANKLE = 18, 
+				 SKEL_LEFT_FOOT = 19, 
+				 SKEL_RIGHT_HIP = 20, 
+				 SKEL_RIGHT_KNEE = 21, 
+				 SKEL_RIGHT_ANKLE = 22, 
+				 SKEL_RIGHT_FOOT = 23 
+				 */
+				
 				if(idx == 0)
 				{
 					headrot = Vec3f(bone.orientation[0], bone.orientation[1], bone.orientation[2]);
@@ -642,6 +683,16 @@ void SkelsApp::update()
 				{
 					rightShoulder = pos;
 				}
+				if(idx == 6)
+				{
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
+					diffLElbow = val - windowCenter - massCenter;
+				}
+				if(idx == 12)
+				{
+					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
+					diffRElbow = val - windowCenter - massCenter;
+				}
 					
 				
 				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, .0f, 1.0f);
@@ -660,19 +711,26 @@ void SkelsApp::update()
 	diffLeftHand.z = math<float>::clamp(diffLeftHand.z, -clmp, clmp);
 	diffRightHand.x = math<float>::clamp(diffRightHand.x, -clmp, clmp);
 	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
-     
-	float maxrot = ((rot/M_PI)*-1.0f+1.0f)/2.0f;
+    
+	
+	// if a hand is hidden behind the body, set its value so that we disregard it for movement
+	maxrot = ((rot/M_PI)*-1.0f+1.0f)/2.0f;
 	
 	if(diffRightHand.z > 10.0f 
-	   && math<float>::abs(diffRightHand.x) < 70.0f
+	   && math<float>::abs(diffRightHand.x) < 60.0f
 	   && maxrot > 0.35f && maxrot < 0.65f ) 
 		diffRightHand.y = - 50.0f;
 	
 	if(diffLeftHand.z > 10.0f 
-	   && math<float>::abs(diffLeftHand.x) < 70.0f
+	   && math<float>::abs(diffLeftHand.x) < 60.0f
 	   && maxrot > 0.35f && maxrot < 0.65f ) 
 		diffLeftHand.y = - 50.0f;
 	
+	
+	// GESTURE: start game
+	
+	if(state == SK_TRACKING && !game_running && (diffRightHand.y > mParam_armYMoveThresh || diffLeftHand.y > mParam_armYMoveThresh))
+		startGame();
 	
 	
     // if arms are too close or too low, don't register it as a move gesture
@@ -897,7 +955,8 @@ void SkelsApp::draw()
             gl::color( cinder::ColorA(1, 1, 1, 1) );
             gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
             gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
-            gl::draw( mOneUserTex, Rectf( xoff+sx*2, yoff, xoff+sx*3, yoff+sy) );
+			if( _manager->hasUsers() && _manager->hasUser(1) )
+				gl::draw( mOneUserTex, Rectf( xoff+sx*2, yoff, xoff+sx*3, yoff+sy) );
             glDisable( GL_TEXTURE_2D );
         }
 		
@@ -914,7 +973,7 @@ void SkelsApp::draw()
 
 		
 		stringstream ss, ss2;
-		ss << math<float>::atan2(headrot.z, headrot.x) << " ''' " << rot;//center.vel.length();
+		ss << math<float>::atan2(headrot.z, headrot.x) << " ''' " << maxrot;//center.vel.length();
 		gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT-HEIGHT/5), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica32);
 		
 		
@@ -922,7 +981,7 @@ void SkelsApp::draw()
 		tl.addLine(ss2.str());
 		ss2.str("");
 		
-		ss2 << confidenceLH;
+		ss2 << diffLElbow;
 		tl.addLine(ss2.str());
 		ss2.str("");
 		
@@ -930,7 +989,7 @@ void SkelsApp::draw()
 		tr.addRightLine(ss2.str());
 		ss2.str("");
 		
-		ss2 << confidenceRH;
+		ss2 << diffRElbow;
 		tr.addRightLine(ss2.str());
 		ss2.str("");
 		
@@ -983,7 +1042,7 @@ void SkelsApp::draw()
             tl.setFont(helveticaB32);
             tl.setColor(Color(1.0f, 1.0f, 1.0f));
             tl.setLeadingOffset(45.0f);
-//            tl.addLine("welcome to the memory dump.");
+            tl.addLine("intro");
 //            tl.setFont(helvetica);
 //            tl.setLeadingOffset(25.0f);
 //            tl.addLine("this is where memories lie, in the dark, awaiting oblivion.");
@@ -1002,6 +1061,23 @@ void SkelsApp::draw()
 }
 
 
+void SkelsApp::startGame()
+{
+	oscManager->send("/skels/start", 1.0f);
+	center.setActive(true);
+	
+	vector<ObjPtr>::iterator obit;
+	for(obit = world.things.begin(); obit != world.things.end(); obit++)
+	{
+		ObjPtr obj = *obit;
+		
+		obj->setActive(true);
+		if(obj->soundActive)
+			oscManager->send("/skels/event/objon", obj->objID, 1);
+	}
+	
+	game_running = true;
+}
 
 
 void SkelsApp::keyDown( KeyEvent event )
@@ -1023,18 +1099,7 @@ void SkelsApp::keyDown( KeyEvent event )
         }
         else
         {
-            oscManager->send("/skels/start", 1.0f);
-            center.setActive(true);
-            
-            vector<ObjPtr>::iterator obit;
-            for(obit = world.things.begin(); obit != world.things.end(); obit++)
-            {
-                ObjPtr obj = *obit;
-                
-                obj->setActive(true);
-                if(obj->soundActive)
-                    oscManager->send("/skels/event/objon", obj->objID, 1);
-            }
+            startGame();
         }
         
 	}
@@ -1065,7 +1130,6 @@ void SkelsApp::keyDown( KeyEvent event )
 
 void SkelsApp::keyUp( KeyEvent event )
 {
-	console() << "key up" << endl;
 	if(state == SK_KEYBOARD) 
 	{
 		switch(event.getChar())

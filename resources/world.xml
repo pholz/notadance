@@ -4,7 +4,7 @@
         <name>item1</name>
         <pos>
             <x>1000</x>
-            <z>1000</z>
+            <z>-700</z>
         </pos>
         <active>1</active>
 		<type>0</type>
@@ -26,7 +26,7 @@
         <name>item3</name>
         <pos>
             <x>500</x>
-            <z>200</z>
+            <z>-1800</z>
         </pos>
         <active>0</active>
 		<type>0</type>
@@ -36,22 +36,33 @@
         <id>4</id>
         <name>exit4</name>
         <pos>
-            <x>600</x>
-            <z>-1400</z>
+            <x>1500</x>
+            <z>-2200</z>
         </pos>
         <active>0</active>
-		<type>0</type>
+		<type>1</type>
     </object>
     
     <object>
         <id>5</id>
         <name>item5</name>
         <pos>
-            <x>1000</x>
-            <z>-1600</z>
+            <x>2500</x>
+            <z>-3700</z>
         </pos>
         <active>0</active>
-		<type>1</type>
+		<type>0</type>
+    </object>
+	
+	<object>
+        <id>6</id>
+        <name>item6</name>
+        <pos>
+            <x>-600</x>
+            <z>-4800</z>
+        </pos>
+        <active>0</active>
+		<type>0</type>
     </object>
 </objects>
     
@@ -60,7 +71,7 @@
     <box>
         <pos>
             <x>0</x>
-            <z>-1000</z>
+            <z>-2000</z>
         </pos>
         <dim>
             <x>1000</x>
@@ -71,7 +82,7 @@
     <box>
         <pos>
             <x>0</x>
-            <z>-4000</z>
+            <z>-15000</z>
         </pos>
         <dim>
             <x>10000</x>
@@ -93,22 +104,22 @@
     <box>
         <pos>
             <x>-4000</x>
-            <z>0</z>
+            <z>-5000</z>
         </pos>
         <dim>
             <x>200</x>
-            <z>10000</z>
+            <z>20000</z>
         </dim>
     </box>
     
     <box>
         <pos>
             <x>4000</x>
-            <z>0</z>
+            <z>-5000</z>
         </pos>
         <dim>
             <x>200</x>
-            <z>10000</z>
+            <z>20000</z>
         </dim>
     </box>
     
@@ -193,6 +204,7 @@
         
         <nextvisuals>
             <visualsname>vis_collect_exit</visualsname>
+			<visualsname>vis_item3</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -244,6 +256,7 @@
         </deactivateobjects>
         
         <deactivatevisuals>
+			<visualsname>vis_item3</visualsname>
         </deactivatevisuals>
         
     </event>
@@ -254,9 +267,13 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
+			<objectname>item5</objectname>
+			<objectname>item6</objectname>
         </nextobjects>
         
         <nextvisuals>
+			<visualsname>vis_item5</visualsname>
+			<visualsname>vis_item6</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -264,6 +281,50 @@
         </deactivateobjects>
         
         <deactivatevisuals>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item5</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i5</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item5</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item5</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item6</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i6</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item6</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item6</visualsname>
         </deactivatevisuals>
         
     </event>

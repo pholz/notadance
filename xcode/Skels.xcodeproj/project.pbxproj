@@ -19,9 +19,7 @@
 		53E3CDFC0E86099300238D2B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53E3CDFB0E86099300238D2B /* Carbon.framework */; };
 		6612C9D8133D37AF00A7F0C0 /* pic1.png in Resources */ = {isa = PBXBuildFile; fileRef = 6612C9D7133D37AF00A7F0C0 /* pic1.png */; };
 		66325E4912FCEF3500E95797 /* libOpenNI.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66325DE012FCEF3500E95797 /* libOpenNI.dylib */; };
-		66325E4A12FCEF3500E95797 /* NiSampleModule.exp in Sources */ = {isa = PBXBuildFile; fileRef = 66325DE212FCEF3500E95797 /* NiSampleModule.exp */; };
 		66325E4B12FCEF3500E95797 /* NiSampleModule.lib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66325DE312FCEF3500E95797 /* NiSampleModule.lib */; };
-		66325E4C12FCEF3500E95797 /* openNI.exp in Sources */ = {isa = PBXBuildFile; fileRef = 66325DE412FCEF3500E95797 /* openNI.exp */; };
 		66325E4D12FCEF3500E95797 /* openNI.lib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66325DE512FCEF3500E95797 /* openNI.lib */; };
 		66325E4E12FCEF3500E95797 /* README in Resources */ = {isa = PBXBuildFile; fileRef = 66325DE612FCEF3500E95797 /* README */; };
 		66325E7812FCEF3500E95797 /* OpenNIRecorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66325E3012FCEF3500E95797 /* OpenNIRecorder.cpp */; };
@@ -588,8 +586,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66325E4A12FCEF3500E95797 /* NiSampleModule.exp in Sources */,
-				66325E4C12FCEF3500E95797 /* openNI.exp in Sources */,
 				66325E7812FCEF3500E95797 /* OpenNIRecorder.cpp in Sources */,
 				66325E7912FCEF3500E95797 /* VOpenNIDevice.cpp in Sources */,
 				66325E7A12FCEF3500E95797 /* VOpenNIDeviceManager.cpp in Sources */,
