@@ -66,6 +66,32 @@ public:
 		sender.sendMessage(message);
 	}
 	
+	void send(string address, int a, float b)
+	{
+		osc::Message message;
+		
+        message.addIntArg(a);
+        message.addFloatArg(b);
+        
+		message.setAddress(address);
+		message.setRemoteEndpoint(m_send_host, m_send_port);
+		sender.sendMessage(message);
+	}
+	
+	void send(string address, int a, float b, float c, float d)
+	{
+		osc::Message message;
+		
+        message.addIntArg(a);
+        message.addFloatArg(b);
+		message.addFloatArg(c);
+		message.addFloatArg(d);
+        
+		message.setAddress(address);
+		message.setRemoteEndpoint(m_send_host, m_send_port);
+		sender.sendMessage(message);
+	}
+	
 	void send(string address, int a, string b)
 	{
 		osc::Message message;

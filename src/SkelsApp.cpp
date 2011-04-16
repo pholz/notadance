@@ -44,7 +44,7 @@
 #define DEBUGMODE true
 #define OBJ_ID_EXIT 99
 #define SOUND_ON 0
-#define FRAMERATE 25
+#define FRAMERATE 30
 
 #define NULLVEC Vec3f(.0f, .0f, .0f)
 
@@ -53,7 +53,30 @@ using namespace ci::app;
 using namespace std;
 
 
+string dec3(float f)
+{
+	stringstream ss;
+	
+	ss << (math<float>::floor(f * 1000.0f) / 1000.0f);
+	
+	string s = ss.str();
+	
+	while(strlen(s.c_str()) < 8)
+	{
+		stringstream ss2;
+		ss2 << " " << s;
+		s = ss2.str();
+	}
+	
+	return s;
+}
 
+string str(Vec3f v, string prefix = "", string spacer = "")
+{
+	stringstream ss;
+	ss << prefix << spacer << dec3(v.x) << "\t\t" << dec3(v.y) << "\t\t\t\t" << dec3(v.z);
+	return ss.str();
+}
 
 enum AppState
 {
@@ -140,6 +163,9 @@ public:	// Members
 	vector<Vec3f> joints;
 	vector<float> confs;
 	
+	Vec3f jointVecs[24];
+	string jointVecNames[24];
+	
 	// cam & timing
 	CameraPersp cam;
 	float lastUpdate;
@@ -169,9 +195,11 @@ public:	// Members
     float mParam_nearClip;
     float mParam_farClip;
     float mParam_armYMoveThresh;
+	float mParam_walkXScale, mParam_walkZScale;
+	
 	
 	// fonts, layouts
-	Font helvetica, helveticaB, helvetica32, helveticaB32, helvetica48;
+	Font helvetica, helveticaB, helvetica32, helveticaB32, helvetica48, helvetica12;
 	
 	// events
 	
@@ -274,6 +302,9 @@ void SkelsApp::setup()
     
     mParam_armYMoveThresh =         -10.0f;
 	
+	mParam_walkXScale	=			10.0f;
+	mParam_walkZScale	=			10.0f;
+	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex",				&mParam_scaleX,		"min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
@@ -289,19 +320,19 @@ void SkelsApp::setup()
 	mParams.addParam( "zWindowCenter",		&mParam_zWindowCenter,	"min=0.0 max=3000.0 step=1.0" );
 	mParams.addParam( "zMax",				&mParam_zMax,			"min=0.0 max=3000.0 step=1.0" );
 	mParams.addParam( "zArmAdjust",			&mParam_zArmAdjust,		"min=-250.0 max=250.0 step=1.0" );
-	mParams.addParam( "velThreshold",		&mParam_velThreshold,	"min=0.0 max=1000.0 step=1.0" );
 	
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
     
     mParams.addParam( "nearClip",           &mParam_nearClip,       "min=0.0 max=10000.0 step=1.0" );
     mParams.addParam( "farClip",            &mParam_farClip,        "min=0.0 max=10000.0 step=1.0" );
-    
-    mParams.addParam( "armYMoveThresh",     &mParam_armYMoveThresh, "min=-500.0 max=500.0 step=1.0" );
 	
 	mParams.addParam( "drawJoint",     &drawJoint, "min=0 max=20 step=1" );
-    
-    
 	
+	mParams.addParam( "walkXScale",     &mParam_walkXScale, "min=0.5 max=20.0 step=0.5" );
+	mParams.addParam( "walkZScale",     &mParam_walkZScale, "min=0.5 max=20.0 step=0.5" );
+    
+    
+	helvetica12 = Font("Menlo", 16) ;
 	helvetica = Font("Helvetica", 24) ;
     helvetica32 = Font("Helvetica", 32) ;
     helveticaB = Font("Helvetica Bold", 24) ;
@@ -344,6 +375,9 @@ void SkelsApp::setup()
         string xName = objxIt->getChild("name").getValue();
         float xX = objxIt->getChild("pos/x").getValue<float>();
         float xZ = objxIt->getChild("pos/z").getValue<float>();
+		
+		
+		
         int xActive = objxIt->getChild("active").getValue<int>();
 		int xType = objxIt->getChild("type").getValue<int>();
         
@@ -357,20 +391,25 @@ void SkelsApp::setup()
         oscManager->send("/skels/event/objon", o->objID, 0);
         world.addObject(o);
         objectsMap[o->name] = o;
+		
+		if(objxIt->hasChild("vel"))
+		{
+			o->vel = Vec3f(objxIt->getChild("vel/x").getValue<float>(), .0f, objxIt->getChild("vel/z").getValue<float>());
+		}
     }
     
-    XmlTree &xmlObstacles = xmlWorld.getChild("obstacles");
-    
-    for(XmlTree::ConstIter obstIt = xmlObstacles.begin("box"); obstIt != xmlObstacles.end(); obstIt++)
-    {
-        float xX = obstIt->getChild("pos/x").getValue<float>();
-        float xZ = obstIt->getChild("pos/z").getValue<float>();
-        float xdX = obstIt->getChild("dim/x").getValue<float>();
-        float xdZ = obstIt->getChild("dim/z").getValue<float>();
-        
-        o.reset(new Box3D(Vec3f(xX, .0f, xZ), Vec3f(xdX, 1000.0f, xdZ)));
-        world.addObstacle(o);
-    }
+//    XmlTree &xmlObstacles = xmlWorld.getChild("obstacles");
+//    
+//    for(XmlTree::ConstIter obstIt = xmlObstacles.begin("box"); obstIt != xmlObstacles.end(); obstIt++)
+//    {
+//        float xX = obstIt->getChild("pos/x").getValue<float>();
+//        float xZ = obstIt->getChild("pos/z").getValue<float>();
+//        float xdX = obstIt->getChild("dim/x").getValue<float>();
+//        float xdZ = obstIt->getChild("dim/z").getValue<float>();
+//        
+//        o.reset(new Box3D(Vec3f(xX, .0f, xZ), Vec3f(xdX, 1000.0f, xdZ)));
+//        world.addObstacle(o);
+//    }
 	
 	// textures
     //.
@@ -491,6 +530,34 @@ void SkelsApp::setup()
 		SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
 		objectsMap["l1_item1"]->setSound(s);
     }
+	
+	jointVecNames[0] = "SKEL___HEAD";
+	jointVecNames[1] = "SKEL___NECK";
+	jointVecNames[2] = "SKEL___TORS";
+	jointVecNames[3] = "SKEL___WAIS";
+	jointVecNames[4] = "SKEL_L_COLL";
+	jointVecNames[5] = "SKEL_L_SHOU";
+	jointVecNames[6] = "SKEL_L_ELBO";
+	jointVecNames[7] = "SKEL_L_WRIS";
+	jointVecNames[8] = "SKEL_L_HAND";
+	jointVecNames[9] = "SKEL_L_FING";
+	jointVecNames[10] = "SKEL_R_COLL";
+	jointVecNames[11] = "SKEL_R_SHOU";
+	jointVecNames[12] = "SKEL_R_ELBO";
+	jointVecNames[13] = "SKEL_R_WRIS";
+	jointVecNames[14] = "SKEL_R_HAND";
+	jointVecNames[15] = "SKEL_R_FING";
+	jointVecNames[16] = "SKEL_L_HIP";
+	jointVecNames[17] = "SKEL_L_KNEE";
+	jointVecNames[18] = "SKEL_L_ANKL";
+	jointVecNames[19] = "SKEL_L_FOOT";
+	jointVecNames[20] = "SKEL_R_HIP";
+	jointVecNames[21] = "SKEL_R_KNEE";
+	jointVecNames[22] = "SKEL_R_ANKL";
+	jointVecNames[23] = "SKEL_R_FOOT";
+	
+	for(int i = 0; i < 24; i++)
+		jointVecs[i] = Vec3f(i * 143.3485, i * 273.3, i);
 
 }
 
@@ -615,6 +682,10 @@ void SkelsApp::update()
 								  HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, 
 								  mParam_zMax/2 + (point.Z - mParam_zCenter) * mParam_scaleZ);
 				
+				jointVecs[idx] = pos;
+				
+				
+				
 				// 0 head
 				// 11, 5 shoulders
 				// 4 center
@@ -697,6 +768,8 @@ void SkelsApp::update()
 				
 				joints[idx] = center.pos + (pos - windowCenter) * Vec3f(1, .0f, 1.0f);
 				confs[idx] = bone.positionConfidence;
+				
+				oscManager->send("/skels/joints", idx, pos.x, pos.y, pos.z);
 			}
 			
 		}
@@ -740,8 +813,10 @@ void SkelsApp::update()
 
 	if(state == SK_TRACKING)
 	{
-		center.vel = totaldiff * Vec3f(2.5f, .0f, 2.5f);
-		if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
+		// center.vel = totaldiff * Vec3f(2.5f, .0f, 2.5f);
+		//if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
+		
+		center.pos = massCenter * Vec3f(10.0f, 0.0f, 10.0f);
 		
 		shoulders = leftShoulder - rightShoulder;
 	}
@@ -996,6 +1071,12 @@ void SkelsApp::draw()
 		
 		gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));
 		gl::draw(gl::Texture(tr.render()), Vec2f(WIDTH-WIDTH/2+WIDTH/8, HEIGHT-HEIGHT/6));
+		
+//		for(int i = 0; i < 24; i++)
+//		{
+//			gl::drawString(str(jointVecs[i], jointVecNames[i], "\t\t\t"), Vec2f(200, i * 20 + 100), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica12);
+//		}
+//		
 	} // endif debug mode
 	
 	

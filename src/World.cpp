@@ -40,7 +40,10 @@ void World::draw()
 		ObjPtr obj = *obit;
 		
 		//glPushMatrix();
-		gl::color(Color(.5f, .5f, 1.0f));
+		if(obj->soundActive)
+			gl::color(Color(.7f, .7f, 1.0f));
+		else
+			gl::color(Color(.2f, .2f, 1.0f));
 		gl::drawSphere(obj->pos, 20.0f, 32);
 		
 		gl::color(Color(.5f, .5f, 1.0f));

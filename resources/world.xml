@@ -15,7 +15,7 @@
         <name>exit2</name>
         <pos>
             <x>-900</x>
-            <z>-1400</z>
+            <z>1400</z>
         </pos>
         <active>0</active>
 		<type>1</type>
@@ -25,7 +25,7 @@
         <id>3</id>
         <name>item3</name>
         <pos>
-            <x>500</x>
+            <x>-500</x>
             <z>-1800</z>
         </pos>
         <active>0</active>
@@ -37,7 +37,7 @@
         <name>exit4</name>
         <pos>
             <x>1500</x>
-            <z>-2200</z>
+            <z>-900</z>
         </pos>
         <active>0</active>
 		<type>1</type>
@@ -47,8 +47,8 @@
         <id>5</id>
         <name>item5</name>
         <pos>
-            <x>2500</x>
-            <z>-3700</z>
+            <x>100</x>
+            <z>-100</z>
         </pos>
         <active>0</active>
 		<type>0</type>
@@ -59,10 +59,40 @@
         <name>item6</name>
         <pos>
             <x>-600</x>
-            <z>-4800</z>
+            <z>-800</z>
         </pos>
         <active>0</active>
 		<type>0</type>
+    </object>
+	
+	<object>
+        <id>7</id>
+        <name>item7</name>
+        <pos>
+            <x>-3000</x>
+            <z>-3000</z>
+        </pos>
+		<vel>
+			<x>50</x>
+            <z>50</z>
+			</vel>
+        <active>0</active>
+		<type>1</type>
+    </object>
+	
+	<object>
+        <id>8</id>
+        <name>item8</name>
+        <pos>
+            <x>3000</x>
+            <z>-3000</z>
+        </pos>
+		<vel>
+			<x>-50</x>
+            <z>50</z>
+		</vel>
+        <active>0</active>
+		<type>1</type>
     </object>
 </objects>
     
@@ -74,52 +104,41 @@
             <z>-2000</z>
         </pos>
         <dim>
-            <x>1000</x>
-            <z>200</z>
-        </dim>
-    </box>
-    
-    <box>
-        <pos>
-            <x>0</x>
-            <z>-15000</z>
-        </pos>
-        <dim>
-            <x>10000</x>
-            <z>200</z>
-        </dim>
-    </box>
-    
-    <box>
-        <pos>
-            <x>0</x>
-            <z>4000</z>
-        </pos>
-        <dim>
-            <x>10000</x>
-            <z>200</z>
-        </dim>
-    </box>
-    
-    <box>
-        <pos>
-            <x>-4000</x>
-            <z>-5000</z>
-        </pos>
-        <dim>
-            <x>200</x>
-            <z>20000</z>
-        </dim>
-    </box>
-    
-    <box>
-        <pos>
             <x>4000</x>
-            <z>-5000</z>
+            <z>200</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>0</x>
+            <z>2000</z>
+        </pos>
+        <dim>
+            <x>4000</x>
+            <z>200</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>-2000</x>
+            <z>0</z>
         </pos>
         <dim>
             <x>200</x>
-            <z>20000</z>
+            <z>4000</z>
+        </dim>
+    </box>
+    
+    <box>
+        <pos>
+            <x>2000</x>
+            <z>0</z>
+        </pos>
+        <dim>
+            <x>200</x>
+            <z>4000</z>
         </dim>
     </box>
     
@@ -313,6 +332,7 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
+			<objectname>item7</objectname>
         </nextobjects>
         
         <nextvisuals>
@@ -325,6 +345,50 @@
         
         <deactivatevisuals>
 			<visualsname>vis_item6</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item7</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item8</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i7</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item7</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item7</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	<event>
+        
+        <objectname>item8</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i8</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item8</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item8</visualsname>
         </deactivatevisuals>
         
     </event>

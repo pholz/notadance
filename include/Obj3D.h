@@ -104,7 +104,7 @@ public:
 	
 	void update(float dt)
 	{
-        if(active)
+        if(soundActive)
         {
             pos += vel * dt;
             vel += acc * dt;
