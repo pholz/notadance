@@ -53,6 +53,7 @@ Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
         cout << iter << endl << " __________ " << endl;
         conditionsActions[c] = Actions(vecNextObj, vecNextVis, vecDeObj, vecDeVis);
         
+		/*
         map<Conditions, Actions>::iterator cait;
         for(cait = conditionsActions.begin(); cait != conditionsActions.end(); cait++)
         {
@@ -75,6 +76,7 @@ Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
                 cout << *sit << ", ";
             cout << endl;
         }
+		 */
     }
     
     

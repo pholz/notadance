@@ -9,6 +9,7 @@
         <active>1</active>
 		<type>0</type>
         <lifetime>200</lifetime>
+		<mode>0</mode>
     </object>
     <object>
         <id>2</id>
@@ -19,6 +20,7 @@
         </pos>
         <active>0</active>
 		<type>1</type>
+		<mode>0</mode>
     </object>
     
     <object>
@@ -30,6 +32,7 @@
         </pos>
         <active>0</active>
 		<type>0</type>
+		<mode>0</mode>
     </object>
     
     <object>
@@ -41,6 +44,7 @@
         </pos>
         <active>0</active>
 		<type>1</type>
+		<mode>0</mode>
     </object>
     
     <object>
@@ -52,6 +56,7 @@
         </pos>
         <active>0</active>
 		<type>0</type>
+		<mode>0</mode>
     </object>
 	
 	<object>
@@ -63,36 +68,106 @@
         </pos>
         <active>0</active>
 		<type>0</type>
+		<mode>0</mode>
     </object>
 	
 	<object>
-        <id>7</id>
-        <name>item7</name>
+        <id>11</id>
+        <name>item11</name>
         <pos>
             <x>-3000</x>
             <z>-3000</z>
         </pos>
 		<vel>
-			<x>50</x>
-            <z>50</z>
-			</vel>
-        <active>0</active>
-		<type>1</type>
+			<x>90</x>
+            <z>90</z>
+		</vel>
+        <active>1</active>
+		<type>2</type>
+		<mode>1</mode>
     </object>
 	
 	<object>
-        <id>8</id>
-        <name>item8</name>
+        <id>12</id>
+        <name>item12</name>
         <pos>
             <x>3000</x>
+
             <z>-3000</z>
         </pos>
 		<vel>
-			<x>-50</x>
-            <z>50</z>
+			<x>-90</x>
+            <z>90</z>
 		</vel>
         <active>0</active>
-		<type>1</type>
+		<type>2</type>
+		<mode>1</mode>
+    </object>
+	
+	<object>
+        <id>13</id>
+        <name>item13</name>
+        <pos>
+            <x>2000</x>
+
+            <z>0</z>
+        </pos>
+		<vel>
+			<x>-120</x>
+            <z>10</z>
+		</vel>
+        <active>0</active>
+		<type>2</type>
+		<mode>1</mode>
+    </object>
+	
+	<object>
+        <id>14</id>
+        <name>item14</name>
+        <pos>
+            <x>-2000</x>
+
+            <z>-500</z>
+        </pos>
+		<vel>
+			<x>120</x>
+            <z>0</z>
+		</vel>
+        <active>0</active>
+		<type>2</type>
+		<mode>1</mode>
+    </object>
+	
+	<object>
+        <id>15</id>
+        <name>item15</name>
+        <pos>
+            <x>-1000</x>
+            <z>-3000</z>
+        </pos>
+		<vel>
+			<x>40</x>
+            <z>120</z>
+		</vel>
+        <active>0</active>
+		<type>2</type>
+		<mode>1</mode>
+    </object>
+	
+	<object>
+        <id>16</id>
+        <name>item16</name>
+        <pos>
+            <x>3000</x>
+            <z>3000</z>
+        </pos>
+		<vel>
+			<x>-120</x>
+            <z>-120</z>
+		</vel>
+        <active>0</active>
+		<type>2</type>
+		<mode>1</mode>
     </object>
 </objects>
     
@@ -332,7 +407,6 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-			<objectname>item7</objectname>
         </nextobjects>
         
         <nextvisuals>
@@ -351,44 +425,266 @@
 	
 	<event>
         
-        <objectname>item7</objectname>
+        <objectname>item11</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-			<objectname>item8</objectname>
+			<objectname>item12</objectname>
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect_i7</visualsname>
+            <visualsname>vis_collect_i11</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>item7</objectname>
+            <objectname>item11</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
-			<visualsname>vis_item7</visualsname>
+			<visualsname>vis_item11</visualsname>
         </deactivatevisuals>
         
     </event>
 	<event>
         
-        <objectname>item8</objectname>
+        <objectname>item12</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item13</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i12</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item12</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item12</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item13</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item14</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i13</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item13</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item13</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item14</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item15</objectname>
+			<objectname>item16</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i14</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item14</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item14</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item15</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect_i8</visualsname>
+            <visualsname>vis_collect_i15</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>item8</objectname>
+            <objectname>item15</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
-			<visualsname>vis_item8</visualsname>
+			<visualsname>vis_item15</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item16</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i16</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item16</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item16</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item11</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+			<objectname>item12</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item11</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item11</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	<event>
+        
+        <objectname>item12</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+			<objectname>item13</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item12</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item12</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item13</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+			<objectname>item14</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item13</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item13</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item14</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+			<objectname>item15</objectname>
+			<objectname>item16</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item14</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item14</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item15</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item15</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item15</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item16</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item16</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item16</visualsname>
         </deactivatevisuals>
         
     </event>

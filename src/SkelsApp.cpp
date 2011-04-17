@@ -36,6 +36,8 @@
 #include "cinder/Xml.h"
 #include "Sounds.h"
 #include "FlickrGen.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 
 #define OSC_SEND_HOST "localhost"
@@ -52,6 +54,13 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+typedef enum {
+	
+	SK_MODE_COLLECT = 0,
+	SK_MODE_CATCH = 1,
+	SK_MODE_MATCH = 2
+	
+} GameMode;
 
 string dec3(float f)
 {
@@ -189,13 +198,15 @@ public:	// Members
 	float mParam_zMax;
 	float mParam_zCenter;
 	float mParam_zWindowCenter;
-	float mParam_collectDistance;
+	float mParam_collectDistance, mParam_catchDistance;
 	float mParam_zArmAdjust;
 	float mParam_velThreshold;
     float mParam_nearClip;
     float mParam_farClip;
     float mParam_armYMoveThresh;
 	float mParam_walkXScale, mParam_walkZScale;
+	
+	float mParam_boundsX, mParam_boundsZ;
 	
 	
 	// fonts, layouts
@@ -221,6 +232,7 @@ public:	// Members
     // SETTINGS
     bool setting_useKinect;
     int setting_picsMode;
+	GameMode setting_gameMode;
     
     map< string, vector<gl::Texture> > texturesMap;
     map< string, vector<Surface> > surfacesMap;
@@ -242,6 +254,7 @@ void SkelsApp::setup()
 	game_running = false;
     setting_useKinect = true;
     setting_picsMode = 0;
+	setting_gameMode = SK_MODE_COLLECT;
     
     // get cmd line args and set settings
     // ------------
@@ -254,6 +267,13 @@ void SkelsApp::setup()
         
         if(!argsIt->compare("USERPICS"))
             setting_picsMode = 1;
+		
+		int pos = 0;
+		if( (pos = argsIt->find("GAMEMODE")) != string::npos)
+		{
+			int md = (*argsIt)[pos+9] - '0';
+			setting_gameMode = (GameMode)md;
+		}
             
     }
 	
@@ -264,13 +284,14 @@ void SkelsApp::setup()
         _manager = V::OpenNIDeviceManager::InstancePtr();
         string fp = loadResource(RES_CONFIG)->getFilePath();
         _device0 = _manager->createDevice(fp , true );
-        _device0->debugStr = &global_debug;
         if( !_device0 ) 
         {
             DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
             exit( 0 );
         }
         _device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
+		//_device0->enableOneTimeCalibration(true);
+		_device0->enableFileCalibration(true);
         _manager->start();
 
         gl::Texture::Format format;
@@ -294,6 +315,7 @@ void SkelsApp::setup()
 	mParam_zMax =					2000.0f;
 	
 	mParam_collectDistance =		200.0f;
+	mParam_catchDistance =			800.0f;
 	mParam_zArmAdjust =				16.0f;
 	mParam_velThreshold =			30.0f;
     
@@ -304,6 +326,9 @@ void SkelsApp::setup()
 	
 	mParam_walkXScale	=			10.0f;
 	mParam_walkZScale	=			10.0f;
+	
+	mParam_boundsX		=			3100.0f;
+	mParam_boundsZ		=			3100.0f;
 	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
@@ -322,6 +347,7 @@ void SkelsApp::setup()
 	mParams.addParam( "zArmAdjust",			&mParam_zArmAdjust,		"min=-250.0 max=250.0 step=1.0" );
 	
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
+	mParams.addParam( "catchDistance",	&mParam_catchDistance, "min=0.0 max=2000.0 step=1.0" );
     
     mParams.addParam( "nearClip",           &mParam_nearClip,       "min=0.0 max=10000.0 step=1.0" );
     mParams.addParam( "farClip",            &mParam_farClip,        "min=0.0 max=10000.0 step=1.0" );
@@ -330,6 +356,9 @@ void SkelsApp::setup()
 	
 	mParams.addParam( "walkXScale",     &mParam_walkXScale, "min=0.5 max=20.0 step=0.5" );
 	mParams.addParam( "walkZScale",     &mParam_walkZScale, "min=0.5 max=20.0 step=0.5" );
+	
+	mParams.addParam( "boundsX",     &mParam_boundsX, "min=500 max=4000 step=10" );
+	mParams.addParam( "boundsZ",     &mParam_boundsZ, "min=500 max=4000 step=10" );
     
     
 	helvetica12 = Font("Menlo", 16) ;
@@ -371,16 +400,18 @@ void SkelsApp::setup()
     ObjPtr o;
     for(XmlTree::ConstIter objxIt = xmlObjects.begin("object"); objxIt != xmlObjects.end(); objxIt++)
     {
+		GameMode xMode = (GameMode)objxIt->getChild("mode").getValue<int>();
+		if(xMode != setting_gameMode)
+			continue;
+		
         int xId = objxIt->getChild("id").getValue<int>();
         string xName = objxIt->getChild("name").getValue();
         float xX = objxIt->getChild("pos/x").getValue<float>();
+		
         float xZ = objxIt->getChild("pos/z").getValue<float>();
-		
-		
 		
         int xActive = objxIt->getChild("active").getValue<int>();
 		int xType = objxIt->getChild("type").getValue<int>();
-        
         
         float xLt = objxIt->hasChild("lifetime") ? objxIt->getChild("lifetime").getValue<float>() : .0f;
         
@@ -396,6 +427,14 @@ void SkelsApp::setup()
 		{
 			o->vel = Vec3f(objxIt->getChild("vel/x").getValue<float>(), .0f, objxIt->getChild("vel/z").getValue<float>());
 		}
+		
+		if(obxIt->hasChild("pos/y"))
+		{
+			float xY = objxIt->getChild("pos/y").getValue<float>();
+			o->pos.y = xY;
+		}
+		
+		o->mode = xMode;
     }
     
 //    XmlTree &xmlObstacles = xmlWorld.getChild("obstacles");
@@ -654,12 +693,12 @@ void SkelsApp::update()
 		xn::DepthGenerator* depth = _device0->getDepthGenerator();
 		if( depth )
 		{
-			V::UserBoneList boneList = _manager->getUser(1)->getBoneList();
+			V::OpenNIBoneList boneList = _manager->getUser(1)->getBoneList();
 			
 			if(boneList.size() != joints.size()) joints = vector<Vec3f>(boneList.size());
 			if(boneList.size() != confs.size()) confs = vector<float>(boneList.size());
 			
-			V::UserBoneList::iterator boneIt;
+			V::OpenNIBoneList::iterator boneIt;
 			int idx = 0;
 			for(boneIt = boneList.begin(); boneIt != boneList.end(); boneIt++, idx++)
 			{
@@ -728,7 +767,7 @@ void SkelsApp::update()
 					confidenceCenter = bone.positionConfidence;
 					
 				}
-				if(idx == 10) 
+				if(idx == 8) 
 				{
 					// adjust the z bias of arms to body depending on how much we are facing fwd or back. if back, take the double to account for the nonlinear distance estimation
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
@@ -736,7 +775,7 @@ void SkelsApp::update()
 					confidenceLH = bone.positionConfidence;
 					
 				}
-				if(idx == 15)
+				if(idx == 14)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRightHand = val -windowCenter - massCenter;
@@ -878,17 +917,27 @@ void SkelsApp::update()
 			oscManager->send(ss2.str(), -op.delta.z);
 			
 			// check if player has collected a sound
-			if(op.distance < mParam_collectDistance)
+			if(op.obj->mode == SK_MODE_COLLECT && op.distance < mParam_collectDistance)
 			{
 				oscManager->send("/skels/event/collect", op.obj->objID);
-                
 				events->event(op.obj->name, "EVENT_COLLECT");
-				
-				toRemove = op.obj->objID;
-				
-				if(toRemove == OBJ_ID_EXIT)
+			} 
+			else if(op.obj->mode == SK_MODE_CATCH)
+			{
+				if(op.distance < mParam_catchDistance)
 				{
-					enterState(SK_CLEARING_LEVEL);
+					if(diffRightHand.y > 40.0f || diffLeftHand.y > 40.0f)
+					{
+						oscManager->send("/skels/event/collect", op.obj->objID);
+						events->event(op.obj->name, "EVENT_COLLECT");
+					}
+				}
+				
+				if(op.obj->pos.x < -mParam_boundsX || op.obj->pos.x > mParam_boundsX ||
+				   op.obj->pos.z < -mParam_boundsZ || op.obj->pos.z > mParam_boundsZ)
+				{
+					oscManager->send("/skels/event/expire", op.obj->objID);
+					events->event(op.obj->name, "EVENT_EXPIRE");
 				}
 			}
             
@@ -1056,17 +1105,17 @@ void SkelsApp::draw()
 		tl.addLine(ss2.str());
 		ss2.str("");
 		
-		ss2 << diffLElbow;
-		tl.addLine(ss2.str());
-		ss2.str("");
+//		ss2 << diffLElbow;
+//		tl.addLine(ss2.str());
+//		ss2.str("");
 		
 		ss2 << diffRightHand;
 		tr.addRightLine(ss2.str());
 		ss2.str("");
 		
-		ss2 << diffRElbow;
-		tr.addRightLine(ss2.str());
-		ss2.str("");
+	//	ss2 << diffRElbow;
+	//	tr.addRightLine(ss2.str());
+	//	ss2.str("");
 		
 		
 		gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));

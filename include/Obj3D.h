@@ -143,6 +143,7 @@ public:
     bool            hasSound, doesExpire;
     float           lifetime, expired;
 	int				type; // 0 = memory, 1 = other
+	int				mode;
 	
 };
 
