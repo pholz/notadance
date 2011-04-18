@@ -169,6 +169,31 @@
 		<type>2</type>
 		<mode>1</mode>
     </object>
+	
+	<object>
+        <id>21</id>
+        <name>item21</name>
+        <pos>
+            <x>1300</x>
+            <z>1300</z>
+        </pos>
+        <active>1</active>
+		<type>3</type>
+		<mode>2</mode>
+    </object>
+	
+	<object>
+        <id>22</id>
+        <name>item22</name>
+        <pos>
+            <x>-1300</x>
+            <z>-1300</z>
+        </pos>
+        <active>0</active>
+		<type>3</type>
+		<mode>2</mode>
+    </object>
+	
 </objects>
     
 <obstacles>
@@ -685,6 +710,94 @@
         
         <deactivatevisuals>
 			<visualsname>vis_item16</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item21</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item22</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i21</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item21</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item21</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item22</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i22</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item22</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item22</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item21</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+			<objectname>item22</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item21</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item21</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item22</objectname>
+        <type>EVENT_EXPIRE</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item22</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item22</visualsname>
         </deactivatevisuals>
         
     </event>

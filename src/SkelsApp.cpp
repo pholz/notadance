@@ -198,7 +198,7 @@ public:	// Members
 	float mParam_zMax;
 	float mParam_zCenter;
 	float mParam_zWindowCenter;
-	float mParam_collectDistance, mParam_catchDistance;
+	float mParam_collectDistance, mParam_catchDistance, mParam_matchDistance;
 	float mParam_zArmAdjust;
 	float mParam_velThreshold;
     float mParam_nearClip;
@@ -316,6 +316,8 @@ void SkelsApp::setup()
 	
 	mParam_collectDistance =		200.0f;
 	mParam_catchDistance =			800.0f;
+	mParam_matchDistance =			800.0f;
+	
 	mParam_zArmAdjust =				16.0f;
 	mParam_velThreshold =			30.0f;
     
@@ -348,6 +350,7 @@ void SkelsApp::setup()
 	
 	mParams.addParam( "collectDistance",	&mParam_collectDistance, "min=0.0 max=2000.0 step=1.0" );
 	mParams.addParam( "catchDistance",	&mParam_catchDistance, "min=0.0 max=2000.0 step=1.0" );
+	mParams.addParam( "matchDistance",	&mParam_matchDistance, "min=0.0 max=2000.0 step=1.0" );
     
     mParams.addParam( "nearClip",           &mParam_nearClip,       "min=0.0 max=10000.0 step=1.0" );
     mParams.addParam( "farClip",            &mParam_farClip,        "min=0.0 max=10000.0 step=1.0" );
@@ -390,7 +393,7 @@ void SkelsApp::setup()
 	gameState.player = &center;
     gameState.visualsMap = &visualsMap;
     gameState.objectsMap = &objectsMap;
-    
+    gameState.matchRegistered = false;
     
     xmlWorld = XmlTree( loadResource(RES_WORLD) );
     
@@ -426,12 +429,6 @@ void SkelsApp::setup()
 		if(objxIt->hasChild("vel"))
 		{
 			o->vel = Vec3f(objxIt->getChild("vel/x").getValue<float>(), .0f, objxIt->getChild("vel/z").getValue<float>());
-		}
-		
-		if(obxIt->hasChild("pos/y"))
-		{
-			float xY = objxIt->getChild("pos/y").getValue<float>();
-			o->pos.y = xY;
 		}
 		
 		o->mode = xMode;
@@ -597,6 +594,9 @@ void SkelsApp::setup()
 	
 	for(int i = 0; i < 24; i++)
 		jointVecs[i] = Vec3f(i * 143.3485, i * 273.3, i);
+	
+	
+	oscManager->send("/skels/gamemode", setting_gameMode);
 
 }
 
@@ -902,7 +902,6 @@ void SkelsApp::update()
 	vector<ObjPos> objPositions = world.getPositions();
 	
 	vector<ObjPos>::iterator opit;
-	int toRemove = -1;
 	for(opit = objPositions.begin(); opit != objPositions.end(); opit++)
 	{
 		ObjPos op = *opit;
@@ -937,7 +936,16 @@ void SkelsApp::update()
 				   op.obj->pos.z < -mParam_boundsZ || op.obj->pos.z > mParam_boundsZ)
 				{
 					oscManager->send("/skels/event/expire", op.obj->objID);
-					events->event(op.obj->name, "EVENT_EXPIRE");
+				//	events->event(op.obj->name, "EVENT_EXPIRE");
+				}
+			}
+			else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance)
+			{
+				if(gameState.matchRegistered)
+				{
+					gameState.matchRegistered = 0;
+					oscManager->send("/skels/event/collect", op.obj->objID);
+					events->event(op.obj->name, "EVENT_COLLECT");
 				}
 			}
             
