@@ -184,6 +184,7 @@ public:	// Members
 	bool bDebugMode;
 	string global_debug;
 	bool game_running;
+	bool debug_extra;
 	
 	// utils
 	OscManager* oscManager;
@@ -252,6 +253,7 @@ void SkelsApp::setup()
 	
 	this->setFrameRate(float(FRAMERATE));
 	game_running = false;
+	debug_extra = true;
     setting_useKinect = true;
     setting_picsMode = 0;
 	setting_gameMode = SK_MODE_COLLECT;
@@ -308,7 +310,7 @@ void SkelsApp::setup()
 	mParam_scaleY =					-.5f;
 	mParam_scaleZ =					.25f;
 	
-	mParam_zoom =					8000.0f;
+	mParam_zoom =					4000.0f;
 	
 	mParam_zCenter =				1700.0f;
 	mParam_zWindowCenter =			1000.0f;
@@ -1030,13 +1032,14 @@ void SkelsApp::draw()
 			cam.lookAt(Vec3f(center.pos.x + massCenter.x,  mParam_zoom, center.pos.z + massCenter.z), Vec3f(center.pos.x + massCenter.x, center.pos.y + massCenter.y, center.pos.z + massCenter.z));
 			gl::setMatrices(cam);
 			
-			renderBackground();
+			//renderBackground();
 			
 			gl::color(Color(1.0f, 1.0f, .0f));
             
 			gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
 			gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
 			
+			/*
 			if(state == SK_TRACKING)
 			{
 				// draw individual joints
@@ -1064,6 +1067,7 @@ void SkelsApp::draw()
 			//		gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
 				}
 			}
+			 */
 				
             world.draw();
 			
@@ -1073,67 +1077,73 @@ void SkelsApp::draw()
 		
 		// draw debug info: depth and colour tex
 		// ---------------------------------------------------------------------------
+		
+		if(debug_extra)
+		{
+		
+			gl::setMatricesWindow( WIDTH, HEIGHT );
+			
+			if(setting_useKinect)
+			{
+				float sx = 320;
+				float sy = 240;
+				float xoff = 10;
+				float yoff = 10;
+				
+				glEnable( GL_TEXTURE_2D );
+				gl::color( cinder::ColorA(1, 1, 1, 1) );
+				gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
+				gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
+				if( _manager->hasUsers() && _manager->hasUser(1) )
+					gl::draw( mOneUserTex, Rectf( xoff+sx*2, yoff, xoff+sx*3, yoff+sy) );
+				glDisable( GL_TEXTURE_2D );
+			}
+			
+			// debug params
+			// ---------------------------------------------------------------------------
+			params::InterfaceGl::draw();
+			
+			TextLayout tl, tr;
+			tl.setColor(Color(1.0f, 1.0f, 1.0f));
+			tl.setFont(helvetica32);
+			tr.setColor(Color(1.0f, 1.0f, 1.0f));
+			tr.setFont(helvetica32);
 
-        gl::setMatricesWindow( WIDTH, HEIGHT );
-        
-		if(setting_useKinect)
-        {
-            float sx = 320;
-            float sy = 240;
-            float xoff = 10;
-            float yoff = 10;
-            
-            glEnable( GL_TEXTURE_2D );
-            gl::color( cinder::ColorA(1, 1, 1, 1) );
-            gl::draw( mDepthTex, Rectf( xoff, yoff, xoff+sx, yoff+sy) );
-            gl::draw( mColorTex, Rectf( xoff+sx*1, yoff, xoff+sx*2, yoff+sy) );
-			if( _manager->hasUsers() && _manager->hasUser(1) )
-				gl::draw( mOneUserTex, Rectf( xoff+sx*2, yoff, xoff+sx*3, yoff+sy) );
-            glDisable( GL_TEXTURE_2D );
-        }
-		
-		// debug params
-		// ---------------------------------------------------------------------------
-		params::InterfaceGl::draw();
-        
-		TextLayout tl, tr;
-		tl.setColor(Color(1.0f, 1.0f, 1.0f));
-		tl.setFont(helvetica32);
-		tr.setColor(Color(1.0f, 1.0f, 1.0f));
-		tr.setFont(helvetica32);
 
-
-		
-		stringstream ss, ss2;
-		ss << math<float>::atan2(headrot.z, headrot.x) << " ''' " << maxrot;//center.vel.length();
-		gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT-HEIGHT/5), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica32);
-		
-		
-		ss2 << diffLeftHand;
-		tl.addLine(ss2.str());
-		ss2.str("");
-		
-//		ss2 << diffLElbow;
-//		tl.addLine(ss2.str());
-//		ss2.str("");
-		
-		ss2 << diffRightHand;
-		tr.addRightLine(ss2.str());
-		ss2.str("");
-		
-	//	ss2 << diffRElbow;
-	//	tr.addRightLine(ss2.str());
-	//	ss2.str("");
-		
-		
-		gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));
-		gl::draw(gl::Texture(tr.render()), Vec2f(WIDTH-WIDTH/2+WIDTH/8, HEIGHT-HEIGHT/6));
-		
-//		for(int i = 0; i < 24; i++)
-//		{
-//			gl::drawString(str(jointVecs[i], jointVecNames[i], "\t\t\t"), Vec2f(200, i * 20 + 100), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica12);
-//		}
-//		
+			
+			stringstream ss, ss2;
+			ss << math<float>::atan2(headrot.z, headrot.x) << " ''' " << maxrot;//center.vel.length();
+			gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT-HEIGHT/5), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica32);
+			
+			
+			ss2 << diffLeftHand;
+			tl.addLine(ss2.str());
+			ss2.str("");
+			
+	//		ss2 << diffLElbow;
+	//		tl.addLine(ss2.str());
+	//		ss2.str("");
+			
+			ss2 << diffRightHand;
+			tr.addRightLine(ss2.str());
+			ss2.str("");
+			
+		//	ss2 << diffRElbow;
+		//	tr.addRightLine(ss2.str());
+		//	ss2.str("");
+			
+			
+			gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));
+			gl::draw(gl::Texture(tr.render()), Vec2f(WIDTH-WIDTH/2+WIDTH/8, HEIGHT-HEIGHT/6));
+			
+	//		for(int i = 0; i < 24; i++)
+	//		{
+	//			gl::drawString(str(jointVecs[i], jointVecNames[i], "\t\t\t"), Vec2f(200, i * 20 + 100), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica12);
+	//		}
+	//		
+			
+			
+		}
 	} // endif debug mode
 	
 	
@@ -1246,6 +1256,11 @@ void SkelsApp::keyDown( KeyEvent event )
 	else if( event.getChar() == 'g' )
 	{
 		bDebugMode = !bDebugMode;
+	}
+	
+	else if( event.getChar() == 'h' )
+	{
+		debug_extra = !debug_extra;
 	}
 	
 	else if( event.getChar() == 'k' )

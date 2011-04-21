@@ -9,6 +9,8 @@
 
 #include "World.h"
 #include "Box3D.h"
+#include <time.h>
+#include "cinder/CinderMath.h"
 
 World::World()
 {
@@ -39,15 +41,23 @@ void World::draw()
 	{
 		ObjPtr obj = *obit;
 		
+		float rad = 20.0f;
+		
 		//glPushMatrix();
 		if(obj->soundActive)
-			gl::color(Color(.7f, .7f, 1.0f));
+		{
+			gl::color(Color(.8f, .8f, 1.0f));
+			
+			rad += 20.0f * math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC) + 10.0f;
+		}
 		else
+		{
 			gl::color(Color(.2f, .2f, 1.0f));
-		gl::drawSphere(obj->pos, 20.0f, 32);
+		}
+		gl::drawSphere(obj->pos, rad, 32);
 		
-		gl::color(Color(.5f, .5f, 1.0f));
-		gl::drawVector(gameState.player->pos, gameState.player->pos + (obj->pos-gameState.player->pos).normalized() * 100.0f);
+		//gl::color(Color(.5f, .5f, 1.0f));
+		//gl::drawVector(gameState.player->pos, gameState.player->pos + (obj->pos-gameState.player->pos).normalized() * 100.0f);
 		
 		//glPopMatrix();
 	}
