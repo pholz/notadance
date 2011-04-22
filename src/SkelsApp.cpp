@@ -120,6 +120,13 @@ public:
 	void enterState(AppState s);
 	void startGame();
 	
+	void initParams();
+	void initGame(GameMode gm);
+	void initOpenNI();
+	void processCommandLineArguments();
+	void changeGameMode(GameMode gm);
+	void resetOpenNI();
+	
 	ImageSourceRef getColorImage()
 	{
 		// register a reference to the active buffer
@@ -248,61 +255,8 @@ void SkelsApp::prepareSettings(Settings* settings)
 	settings->setWindowSize(WIDTH, HEIGHT);
 }
 
-void SkelsApp::setup()
-{	
-	
-	this->setFrameRate(float(FRAMERATE));
-	game_running = false;
-	debug_extra = true;
-    setting_useKinect = true;
-    setting_picsMode = 0;
-	setting_gameMode = SK_MODE_COLLECT;
-    
-    // get cmd line args and set settings
-    // ------------
-    vector<string> args = getArgs();
-    vector<string>::iterator argsIt;
-    for(argsIt = args.begin(); argsIt < args.end(); argsIt++)
-    {
-        if(!argsIt->compare("NOKINECT"))
-            setting_useKinect = false;
-        
-        if(!argsIt->compare("USERPICS"))
-            setting_picsMode = 1;
-		
-		int pos = 0;
-		if( (pos = argsIt->find("GAMEMODE")) != string::npos)
-		{
-			int md = (*argsIt)[pos+9] - '0';
-			setting_gameMode = (GameMode)md;
-		}
-            
-    }
-	
-	// init OpenNI stuff
-	// ---------------------------------------------------------------------------
-    if(setting_useKinect)
-    {
-        _manager = V::OpenNIDeviceManager::InstancePtr();
-        string fp = loadResource(RES_CONFIG)->getFilePath();
-        _device0 = _manager->createDevice(fp , true );
-        if( !_device0 ) 
-        {
-            DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
-            exit( 0 );
-        }
-        _device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
-		//_device0->enableOneTimeCalibration(true);
-		_device0->enableFileCalibration(true);
-        _manager->start();
-
-        gl::Texture::Format format;
-        gl::Texture::Format depthFormat;
-        mColorTex =			gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
-        mDepthTex =			gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
-        mOneUserTex =		gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
-    }
-	
+void SkelsApp::initParams()
+{
 	
 	// init debug params
 	// ---------------------------------------------------------------------------
@@ -373,21 +327,64 @@ void SkelsApp::setup()
     helveticaB32 = Font("Helvetica Bold", 32) ;
 	helvetica48 = Font("Helvetica Bold", 48) ;
 	
-	// init camera
+	
+	jointVecNames[0] = "SKEL___HEAD";
+	jointVecNames[1] = "SKEL___NECK";
+	jointVecNames[2] = "SKEL___TORS";
+	jointVecNames[3] = "SKEL___WAIS";
+	jointVecNames[4] = "SKEL_L_COLL";
+	jointVecNames[5] = "SKEL_L_SHOU";
+	jointVecNames[6] = "SKEL_L_ELBO";
+	jointVecNames[7] = "SKEL_L_WRIS";
+	jointVecNames[8] = "SKEL_L_HAND";
+	jointVecNames[9] = "SKEL_L_FING";
+	jointVecNames[10] = "SKEL_R_COLL";
+	jointVecNames[11] = "SKEL_R_SHOU";
+	jointVecNames[12] = "SKEL_R_ELBO";
+	jointVecNames[13] = "SKEL_R_WRIS";
+	jointVecNames[14] = "SKEL_R_HAND";
+	jointVecNames[15] = "SKEL_R_FING";
+	jointVecNames[16] = "SKEL_L_HIP";
+	jointVecNames[17] = "SKEL_L_KNEE";
+	jointVecNames[18] = "SKEL_L_ANKL";
+	jointVecNames[19] = "SKEL_L_FOOT";
+	jointVecNames[20] = "SKEL_R_HIP";
+	jointVecNames[21] = "SKEL_R_KNEE";
+	jointVecNames[22] = "SKEL_R_ANKL";
+	jointVecNames[23] = "SKEL_R_FOOT";
+}
+
+void SkelsApp::initOpenNI()
+{
+	// init OpenNI stuff
 	// ---------------------------------------------------------------------------
-	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
-	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
-	
-	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, mParam_zWindowCenter);
-	
-	// init timing
-	// ---------------------------------------------------------------------------
-	lastUpdate = getElapsedSeconds();
-	
-	// init osc manager
-	// ---------------------------------------------------------------------------
-	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT, &gameState);
-	
+    if(setting_useKinect)
+    {
+        _manager = V::OpenNIDeviceManager::InstancePtr();
+		_manager->setMaxNumOfUsers(1);
+        string fp = loadResource(RES_CONFIG)->getFilePath();
+        _device0 = _manager->createDevice(fp , true );
+        if( !_device0 ) 
+        {
+            DEBUG_MESSAGE( "(App)  Couldn't init device0\n" );
+            exit( 0 );
+        }
+        _device0->setPrimaryBuffer( V::NODE_TYPE_DEPTH );
+		//_device0->enableOneTimeCalibration(true);
+		_device0->enableFileCalibration(true);
+        _manager->start();
+		
+        gl::Texture::Format format;
+        gl::Texture::Format depthFormat;
+        mColorTex =			gl::Texture( KINECT_COLOR_WIDTH, KINECT_COLOR_HEIGHT, format );
+        mDepthTex =			gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+        mOneUserTex =		gl::Texture( KINECT_DEPTH_WIDTH, KINECT_DEPTH_HEIGHT, format );
+    }
+}
+
+void SkelsApp::initGame(GameMode md)
+{
+	setting_gameMode = md;
 	
 	// world
 	// ---------------------------------------------------------------------------
@@ -435,24 +432,10 @@ void SkelsApp::setup()
 		
 		o->mode = xMode;
     }
-    
-//    XmlTree &xmlObstacles = xmlWorld.getChild("obstacles");
-//    
-//    for(XmlTree::ConstIter obstIt = xmlObstacles.begin("box"); obstIt != xmlObstacles.end(); obstIt++)
-//    {
-//        float xX = obstIt->getChild("pos/x").getValue<float>();
-//        float xZ = obstIt->getChild("pos/z").getValue<float>();
-//        float xdX = obstIt->getChild("dim/x").getValue<float>();
-//        float xdZ = obstIt->getChild("dim/z").getValue<float>();
-//        
-//        o.reset(new Box3D(Vec3f(xX, .0f, xZ), Vec3f(xdX, 1000.0f, xdZ)));
-//        world.addObstacle(o);
-//    }
 	
 	// textures
     //.
     flickr = new FlickrGen("pholz", setting_picsMode, this);
-	
 	
 	// send pic data for generative stuff
 	
@@ -471,38 +454,6 @@ void SkelsApp::setup()
 		oscManager->send("/skels/pixels", memories[i]->objID, flickr->names[i%flickr->names.size()]);
 		texturesMap[memories[i]->name].push_back(flickr->textures[i%flickr->textures.size()]);
 	}
-	
-	// init vis textures
-    
-//    vector<gl::Texture>::iterator texit;
-//    
-//    int i =0;
-//    for(texit = flickr->textures.begin(); i < 3 && texit != flickr->textures.end(); texit++, i++)
-//    {
-//        texturesMap["l1_item1"].push_back(*texit);
-//    }
-//    
-//    for( ; i < 6 && texit != flickr->textures.end(); texit++, i++)
-//    {
-//        texturesMap["l2_item1"].push_back(*texit);
-//    }
-//    
-//    for( ; i < 9 && texit != flickr->textures.end(); texit++, i++)
-//    {
-//        texturesMap["l2_item2"].push_back(*texit);
-//    }
-    
-//    ImageSourceRef img = loadImage( getResourcePath("pic1.png") );
-//    surfacesMap["l1_item1"].push_back(Surface( img ));
-//    
-//    
-//    img = loadImage( getResourcePath("pic2.png") );
-//    surfacesMap["l1_item1"].push_back(Surface( img ));
-//    texturesMap["l1_item1"].push_back(gl::Texture( img ));
-//    
-//    img = loadImage( getResourcePath("pic3.png") );
-//    surfacesMap["l1_item1"].push_back(Surface( img ));
-//    texturesMap["l1_item1"].push_back(gl::Texture( img ));
     
     shadersMap["memory_collect"] = gl::GlslProg(loadResource( RES_PASS_VERT ), loadResource( RES_MEM_FRAG ));
     shadersMap["memory_expire"] = gl::GlslProg(loadResource( RES_EXPIRE_VERT ), loadResource( RES_EXPIRE_FRAG ));
@@ -543,63 +494,90 @@ void SkelsApp::setup()
     visualsMap[v->name] = v;
 	
 	
-	// state mgmt
-	// ---------------------------------------------------------------------------
-    enterState(SK_INTRO);
-    //	enterState(SK_DETECTING);
-	
 	bDebugMode = DEBUGMODE;
 	
 	for(int i = 0; i < 26; i++)
 		keyOn[i] = false;
     
     events = shared_ptr<Events>(new Events(&gameState, oscManager, &xmlWorld));
-    
-    // loose ends
-    // ----------------
-    kb_facing = Vec3f(.0f, .0f, -500.0f);
+	
+	oscManager->send("/skels/gamemode", setting_gameMode);
+	
+	
+	game_running = false;
+}
+
+void SkelsApp::processCommandLineArguments()
+{
+	// get cmd line args and set settings
+    // ------------
+    vector<string> args = getArgs();
+    vector<string>::iterator argsIt;
+    for(argsIt = args.begin(); argsIt < args.end(); argsIt++)
+    {
+        if(!argsIt->compare("NOKINECT"))
+            setting_useKinect = false;
+        
+        if(!argsIt->compare("USERPICS"))
+            setting_picsMode = 1;
+		
+		int pos = 0;
+		if( (pos = argsIt->find("GAMEMODE")) != string::npos)
+		{
+			int md = (*argsIt)[pos+9] - '0';
+			setting_gameMode = (GameMode)md;
+		}
+		
+    }
+}
+
+void SkelsApp::setup()
+{	
+	this->setFrameRate(float(FRAMERATE));
+	
+	lastUpdate = getElapsedSeconds();
+	
+	// set default vals
+	// --------------------------------------------------------------------------
+	debug_extra = true;
+    setting_useKinect = true;
+    setting_picsMode = 0;
+	setting_gameMode = SK_MODE_COLLECT;
+	kb_facing = Vec3f(.0f, .0f, -500.0f);
     massCenter = NULLVEC;
 	headrot = NULLVEC;
-    
     confidenceLH = confidenceRH = confidenceCenter = .0f;
 	drawJoint = 0;
+	
     
+    processCommandLineArguments();
+	
+	initOpenNI();
+	
+	initParams();
+	
+	
+	// init camera
+	// ---------------------------------------------------------------------------
+	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
+	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));	
+	windowCenter = Vec3f(WIDTH/2, HEIGHT/2, mParam_zWindowCenter);
+	
+	// init osc manager
+	// ---------------------------------------------------------------------------
+	oscManager = new OscManager(OSC_SEND_HOST, OSC_SEND_PORT, OSC_RECEIVE_PORT, &gameState);
+	
+	// setup game with game mode from command line
+	// ---------------------------------------------------------------------------
+	initGame(setting_gameMode);
+    enterState(SK_INTRO);
+    
+    // FMOD only
+    // ----------------
 	if(SOUND_ON){
 		SndPtr s(new Sound(sounds.system, "/Users/holz/Documents/maxpat/media/skels/sk_kolapot.wav"));
 		objectsMap["l1_item1"]->setSound(s);
     }
-	
-	jointVecNames[0] = "SKEL___HEAD";
-	jointVecNames[1] = "SKEL___NECK";
-	jointVecNames[2] = "SKEL___TORS";
-	jointVecNames[3] = "SKEL___WAIS";
-	jointVecNames[4] = "SKEL_L_COLL";
-	jointVecNames[5] = "SKEL_L_SHOU";
-	jointVecNames[6] = "SKEL_L_ELBO";
-	jointVecNames[7] = "SKEL_L_WRIS";
-	jointVecNames[8] = "SKEL_L_HAND";
-	jointVecNames[9] = "SKEL_L_FING";
-	jointVecNames[10] = "SKEL_R_COLL";
-	jointVecNames[11] = "SKEL_R_SHOU";
-	jointVecNames[12] = "SKEL_R_ELBO";
-	jointVecNames[13] = "SKEL_R_WRIS";
-	jointVecNames[14] = "SKEL_R_HAND";
-	jointVecNames[15] = "SKEL_R_FING";
-	jointVecNames[16] = "SKEL_L_HIP";
-	jointVecNames[17] = "SKEL_L_KNEE";
-	jointVecNames[18] = "SKEL_L_ANKL";
-	jointVecNames[19] = "SKEL_L_FOOT";
-	jointVecNames[20] = "SKEL_R_HIP";
-	jointVecNames[21] = "SKEL_R_KNEE";
-	jointVecNames[22] = "SKEL_R_ANKL";
-	jointVecNames[23] = "SKEL_R_FOOT";
-	
-	for(int i = 0; i < 24; i++)
-		jointVecs[i] = Vec3f(i * 143.3485, i * 273.3, i);
-	
-	
-	oscManager->send("/skels/gamemode", setting_gameMode);
-
 }
 
 void SkelsApp::enterState(AppState s)
@@ -632,21 +610,17 @@ void SkelsApp::mouseDown( MouseEvent event )
 void SkelsApp::update()
 {	
     
-    
 	// timing
 	// ---------------------------------------------------------------------------
 	float now = getElapsedSeconds();
 	float dt = now - lastUpdate;
 	lastUpdate = now;
+
 	
-	
-    
-    
-    /// INTRO
     if(state == SK_INTRO)
         return;
     
-    
+	// update spectrum, and matching events
     oscManager->receive();
 	
 	// Update textures
@@ -681,7 +655,7 @@ void SkelsApp::update()
 	
 	// if we're tracking, do position updates, and apply hand movements
 	// ---------------------------------------------------------------------------
-	else if(setting_useKinect && _manager->hasUsers() && _manager->hasUser(1) && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(1) )
+	else if(setting_useKinect && _manager->hasUsers() && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(_manager->getFirstUser()->getId()) )
 	{
 		if(state != SK_TRACKING)
 		{
@@ -695,7 +669,7 @@ void SkelsApp::update()
 		xn::DepthGenerator* depth = _device0->getDepthGenerator();
 		if( depth )
 		{
-			V::OpenNIBoneList boneList = _manager->getUser(1)->getBoneList();
+			V::OpenNIBoneList boneList = _manager->getFirstUser()->getBoneList();
 			
 			if(boneList.size() != joints.size()) joints = vector<Vec3f>(boneList.size());
 			if(boneList.size() != confs.size()) confs = vector<float>(boneList.size());
@@ -730,34 +704,7 @@ void SkelsApp::update()
 				// 0 head
 				// 11, 5 shoulders
 				// 4 center
-				// 10, 15 hands
-				
-				/*
-				 SKEL_HEAD = 0, 
-				 SKEL_NECK = 1, 
-				 SKEL_TORSO = 2, 
-				 SKEL_WAIST = 3, 
-				 SKEL_LEFT_COLLAR = 4, 
-				 SKEL_LEFT_SHOULDER = 5, 
-				 SKEL_LEFT_ELBOW = 6, 
-				 SKEL_LEFT_WRIST = 7, 
-				 SKEL_LEFT_HAND = 8, 
-				 SKEL_LEFT_FINGERTIP = 9, 
-				 SKEL_RIGHT_COLLAR = 10, 
-				 SKEL_RIGHT_SHOULDER = 11, 
-				 SKEL_RIGHT_ELBOW = 12, 
-				 SKEL_RIGHT_WRIST = 13, 
-				 SKEL_RIGHT_HAND = 14, 
-				 SKEL_RIGHT_FINGERTIP = 15, 
-				 SKEL_LEFT_HIP = 16, 
-				 SKEL_LEFT_KNEE = 17, 
-				 SKEL_LEFT_ANKLE = 18, 
-				 SKEL_LEFT_FOOT = 19, 
-				 SKEL_RIGHT_HIP = 20, 
-				 SKEL_RIGHT_KNEE = 21, 
-				 SKEL_RIGHT_ANKLE = 22, 
-				 SKEL_RIGHT_FOOT = 23 
-				 */
+				// 8, 14 hands
 				
 				if(idx == 0)
 				{
@@ -827,7 +774,7 @@ void SkelsApp::update()
 	diffRightHand.z = math<float>::clamp(diffRightHand.z, -clmp, clmp);
     
 	
-	// if a hand is hidden behind the body, set its value so that we disregard it for movement
+	// if a hand is hidden behind the body, set its value so that we disregard it
 	maxrot = ((rot/M_PI)*-1.0f+1.0f)/2.0f;
 	
 	if(diffRightHand.z > 10.0f 
@@ -842,33 +789,20 @@ void SkelsApp::update()
 	
 	
 	// GESTURE: start game
-	
 	if(state == SK_TRACKING && !game_running && (diffRightHand.y > mParam_armYMoveThresh || diffLeftHand.y > mParam_armYMoveThresh))
 		startGame();
-	
-	
-    // if arms are too close or too low, don't register it as a move gesture
-	Vec3f totaldiff = diffLeftHand + diffRightHand;
-	if(totaldiff.length() < mParam_velThreshold || (diffRightHand.y < mParam_armYMoveThresh || diffLeftHand.y < mParam_armYMoveThresh))
-        totaldiff = Vec3f();
 
 	if(state == SK_TRACKING)
 	{
-		// center.vel = totaldiff * Vec3f(2.5f, .0f, 2.5f);
-		//if(isnan(center.vel.x) || isnan(center.vel.y) || isnan(center.vel.z)) center.vel = Vec3f(.0f, .0f, .0f);
-		
 		center.pos = massCenter * Vec3f(10.0f, 0.0f, 10.0f);
-		
 		shoulders = leftShoulder - rightShoulder;
 	}
 	
 	rot = math<float>::atan2(shoulders.z, shoulders.x);
-	
 	rot = math<float>::floor(rot*100.0f + 0.5f)/100.0f;
 
 	shoulders.y = .0f;
-
-
+	
 	shoulders_norm = shoulders.normalized();
 	shoulders_norm.rotateY(M_PI_2);
 	shoulders_norm.normalize();
@@ -885,7 +819,6 @@ void SkelsApp::update()
 	
 	oscManager->send("/skels/center/x", center.pos.x);
 	oscManager->send("/skels/center/z", center.pos.z);
-	oscManager->send("/skels/center/vel", center.vel.length());
 	oscManager->send("/skels/rot", rot);
 	oscManager->send("/skels/headrot", math<float>::atan2(headrot.z, headrot.x));
     
@@ -962,23 +895,6 @@ void SkelsApp::update()
 		
 		
 	}
-	
-	vector<ObjPtr>::iterator obsit;
-	for(obsit = world.obstacles.begin(); obsit != world.obstacles.end(); obsit++)
-	{
-		ObjPtr optr = *obsit;
-		
-		bool coll = optr->collideXZ(center.pos, center.vel);
-		
-		if(coll)
-		{
-			center.vel = Vec3f();
-			oscManager->send("/skels/event/obstacle", 1.0f);
-            events->event("obstacle","EVENT_BUMP");
-			//events.event(optr, "EVENT_HITOBSTACLE");
-		}
-	}
-    
     
     // update visuals
     // -------
@@ -996,18 +912,6 @@ void SkelsApp::update()
 
 void SkelsApp::renderBackground()
 {
-	
-	for(int j = 0; j < 50; j++)
-	{
-		if(center.pos.distance(Vec3f(j*2000-50000, .0f, .0f)) > getWindowWidth() * 5) continue;
-		
-		glPushMatrix();
-		gl::translate(Vec3f(j * 2000 - 50000, .0f, -2000.0f));
-		gl::color(ColorA(.7f, .2f, .7f, .4f));
-		gl::drawLine(Vec3f(.0f, .0f, -45000.0f), Vec3f(0.0f, .0f, 45000.0f));
-			
-		glPopMatrix();
-	}
 	
 }
 
@@ -1120,19 +1024,10 @@ void SkelsApp::draw()
 			tl.addLine(ss2.str());
 			ss2.str("");
 			
-	//		ss2 << diffLElbow;
-	//		tl.addLine(ss2.str());
-	//		ss2.str("");
-			
 			ss2 << diffRightHand;
 			tr.addRightLine(ss2.str());
 			ss2.str("");
-			
-		//	ss2 << diffRElbow;
-		//	tr.addRightLine(ss2.str());
-		//	ss2.str("");
-			
-			
+
 			gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/8, HEIGHT-HEIGHT/6));
 			gl::draw(gl::Texture(tr.render()), Vec2f(WIDTH-WIDTH/2+WIDTH/8, HEIGHT-HEIGHT/6));
 			
@@ -1158,8 +1053,6 @@ void SkelsApp::draw()
 		
 		if(state == SK_TRACKING || state == SK_KEYBOARD)
 		{
-            // draw some text
-			//gl::drawStringCentered("FOOBAR", Vec2f(WIDTH/2, HEIGHT/2), ColorA(.5f, .5f, .5f, 1.0f), helvetica48);
             
             // draw visuals
             // -----
@@ -1191,13 +1084,6 @@ void SkelsApp::draw()
             tl.setColor(Color(1.0f, 1.0f, 1.0f));
             tl.setLeadingOffset(45.0f);
             tl.addLine("intro");
-//            tl.setFont(helvetica);
-//            tl.setLeadingOffset(25.0f);
-//            tl.addLine("this is where memories lie, in the dark, awaiting oblivion.");
-//            tl.addLine("don't let that happen. you can't see here but you can hear the memories.");
-//            tl.addLine("they sound like music, but they are getting more distorted all the time.");
-//            tl.setFont(helveticaB);
-//            tl.addLine("find them in time, and you will keep them alive a little longer!");
             gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/6, HEIGHT/4));
         }
         else
@@ -1269,6 +1155,11 @@ void SkelsApp::keyDown( KeyEvent event )
 		else enterState(lastState);
 	}
 	
+	else if( event.getChar() == 'r' )
+	{
+		resetOpenNI();
+	}
+	
 	else if(state == SK_KEYBOARD)
 		switch(event.getChar())
 		{
@@ -1279,6 +1170,17 @@ void SkelsApp::keyDown( KeyEvent event )
 				keyOn[event.getChar() - 'a'] = true;
 				break;
 		}
+	else
+	{
+		switch(event.getChar())
+		{
+			case '0':
+			case '1':
+			case '2':
+				changeGameMode( (GameMode) (event.getChar() - '0'));
+				break;
+		}
+	}
 }
 
 void SkelsApp::keyUp( KeyEvent event )
@@ -1296,6 +1198,27 @@ void SkelsApp::keyUp( KeyEvent event )
 				
 		}
 	}
+}
+
+void SkelsApp::resetOpenNI()
+{
+	_manager->removeUser(1);
+	enterState(SK_DETECTING);
+	
+}
+
+void SkelsApp::changeGameMode(GameMode gm)
+{
+	console() << "changing game mode to " << (int)gm;
+	
+	xmlWorld = XmlTree();
+	world = World();
+	
+	for(int i = 0; i < 30; i++)
+		oscManager->send("/skels/event/objon", i, 0);
+	
+	initGame(gm);
+	startGame();
 }
 
 void SkelsApp::shutdown()
