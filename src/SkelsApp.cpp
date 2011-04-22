@@ -54,6 +54,37 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+
+typedef enum {
+	
+	SK_SKEL_HEAD = 0,
+	SK_SKEL_NECK = 1,
+	SK_SKEL_TORSO = 2,
+	SK_SKEL_WAIST = 3,
+	SK_SKEL_L_COLLAR = 4,
+	SK_SKEL_L_SHOULDER = 5,
+	SK_SKEL_L_ELBOW = 6,
+	SK_SKEL_L_WRIST = 7,
+	SK_SKEL_L_HAND = 8,
+	SK_SKEL_L_FINGER = 9,
+	SK_SKEL_R_COLLAR = 10,
+	SK_SKEL_R_SHOULDER = 11,
+	SK_SKEL_R_ELBOW = 12,
+	SK_SKEL_R_WRIST = 13,
+	SK_SKEL_R_HAND = 14,
+	SK_SKEL_R_FINGER = 15,
+	SK_SKEL_L_HIP = 16,
+	SK_SKEL_L_KNEE = 17,
+	SK_SKEL_L_ANKLE = 18,
+	SK_SKEL_L_FOOT = 19,
+	SK_SKEL_R_HIP = 20,
+	SK_SKEL_R_KNEE = 21,
+	SK_SKEL_R_ANKLE = 22,
+	SK_SKEL_R_FOOT = 23,
+	
+} jointIndex;
+ 
+
 typedef enum {
 	
 	SK_MODE_COLLECT = 0,
@@ -116,6 +147,7 @@ public:
 	void keyDown( KeyEvent event );
 	void keyUp( KeyEvent event );
 	void renderBackground();
+	void renderPlayer();
 	void shutdown();
 	void enterState(AppState s);
 	void startGame();
@@ -352,6 +384,7 @@ void SkelsApp::initParams()
 	jointVecNames[21] = "SKEL_R_KNEE";
 	jointVecNames[22] = "SKEL_R_ANKL";
 	jointVecNames[23] = "SKEL_R_FOOT";
+	
 }
 
 void SkelsApp::initOpenNI()
@@ -548,6 +581,7 @@ void SkelsApp::setup()
 	headrot = NULLVEC;
     confidenceLH = confidenceRH = confidenceCenter = .0f;
 	drawJoint = 0;
+	center.soundActive = true;
 	
     
     processCommandLineArguments();
@@ -706,17 +740,17 @@ void SkelsApp::update()
 				// 4 center
 				// 8, 14 hands
 				
-				if(idx == 0)
+				if(idx == SK_SKEL_HEAD)
 				{
 					headrot = Vec3f(bone.orientation[0], bone.orientation[1], bone.orientation[2]);
 				}
-				if(idx == 4) 
+				if(idx == SK_SKEL_WAIST) 
 				{
 					massCenter = pos - windowCenter;
 					confidenceCenter = bone.positionConfidence;
 					
 				}
-				if(idx == 8) 
+				if(idx == SK_SKEL_L_HAND) 
 				{
 					// adjust the z bias of arms to body depending on how much we are facing fwd or back. if back, take the double to account for the nonlinear distance estimation
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
@@ -724,7 +758,7 @@ void SkelsApp::update()
 					confidenceLH = bone.positionConfidence;
 					
 				}
-				if(idx == 14)
+				if(idx == SK_SKEL_R_HAND)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRightHand = val -windowCenter - massCenter;
@@ -734,20 +768,20 @@ void SkelsApp::update()
 					ly = pos.y;
 					lz = pos.z;
 				}
-				if(idx == 5)
+				if(idx == SK_SKEL_L_SHOULDER)
 				{
 					leftShoulder = pos;
 				}
-				if(idx == 11)
+				if(idx == SK_SKEL_R_SHOULDER)
 				{
 					rightShoulder = pos;
 				}
-				if(idx == 6)
+				if(idx == SK_SKEL_L_ELBOW)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffLElbow = val - windowCenter - massCenter;
 				}
-				if(idx == 12)
+				if(idx == SK_SKEL_R_ELBOW)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRElbow = val - windowCenter - massCenter;
@@ -796,6 +830,10 @@ void SkelsApp::update()
 	{
 		center.pos = massCenter * Vec3f(10.0f, 0.0f, 10.0f);
 		shoulders = leftShoulder - rightShoulder;
+	} else if (state == SK_KEYBOARD)
+	{
+		center.update(dt);
+		console() << center.pos << " / " << center.vel << endl;
 	}
 	
 	rot = math<float>::atan2(shoulders.z, shoulders.x);
@@ -915,6 +953,64 @@ void SkelsApp::renderBackground()
 	
 }
 
+void SkelsApp::renderPlayer()
+{
+	// draw individual joints
+	// ---------------------------------------------------------------------------
+	
+	Color bodyCol(1.0f, 1.0f, 1.0f);
+	
+	gl::color(bodyCol);
+	gl::drawLine(joints[SK_SKEL_NECK], joints[SK_SKEL_L_SHOULDER]);
+	gl::drawLine(joints[SK_SKEL_NECK], joints[SK_SKEL_R_SHOULDER]);
+	
+	gl::drawLine(joints[SK_SKEL_L_SHOULDER], joints[SK_SKEL_L_ELBOW]);
+	gl::drawLine(joints[SK_SKEL_R_SHOULDER], joints[SK_SKEL_R_ELBOW]);
+	
+	gl::drawLine(joints[SK_SKEL_L_ELBOW], joints[SK_SKEL_L_HAND]);
+	gl::drawLine(joints[SK_SKEL_R_ELBOW], joints[SK_SKEL_R_HAND]);
+	
+	gl::drawLine(joints[SK_SKEL_NECK], joints[SK_SKEL_TORSO]);
+	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_TORSO]);
+	
+	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_L_HIP]);
+	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_R_HIP]);
+	
+	gl::drawLine(joints[SK_SKEL_L_HIP], joints[SK_SKEL_L_KNEE]);
+	gl::drawLine(joints[SK_SKEL_R_HIP], joints[SK_SKEL_R_KNEE]);
+	
+	gl::drawLine(joints[SK_SKEL_L_KNEE], joints[SK_SKEL_L_FOOT]);
+	gl::drawLine(joints[SK_SKEL_R_KNEE], joints[SK_SKEL_R_FOOT]);
+	
+	vector<Vec3f>::iterator it;
+	int idx = 0;
+	for(it = joints.begin(); it != joints.end(); it++, idx++)
+	{
+		Vec3f &v = *it;
+		
+		switch(idx)
+		{
+			case SK_SKEL_HEAD:
+				gl::color(bodyCol);
+				gl::drawSphere(v, 30.0f, 32);
+				break;
+				
+			case SK_SKEL_R_HAND:
+			case SK_SKEL_L_HAND:
+				gl::color(bodyCol);
+				gl::drawSphere(v, 20.0f, 32);
+				break;
+			
+			case SK_SKEL_L_FOOT:
+			case SK_SKEL_R_FOOT:
+				gl::color(bodyCol);
+				gl::drawSphere(v, 20.0f, 16);
+				break;
+				
+		}
+	}
+}
+
 void SkelsApp::draw()
 {
     gl::setMatricesWindow( WIDTH, HEIGHT );
@@ -938,40 +1034,15 @@ void SkelsApp::draw()
 			
 			//renderBackground();
 			
-			gl::color(Color(1.0f, 1.0f, .0f));
-            
-			gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
-			gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
-			
-			/*
 			if(state == SK_TRACKING)
+				renderPlayer();
+			else
 			{
-				// draw individual joints
-				// ---------------------------------------------------------------------------
-				vector<Vec3f>::iterator it;
-				int idx = 0;
-				for(it = joints.begin(); it != joints.end(); it++, idx++)
-				{
-					if(confs[idx])
-						gl::color(Color(.0f, 1.0f, .0f));
-					else
-						gl::color(Color(1.0f, .0f, .0f));
-					
-					float rad = 7.0f;
-					if(idx == 10 || idx == 15) {}//gl::color(Color(.0f, 1.0f, .0f));
-					else if(idx == 4) {
-//							gl::color(Color(1.0f, .0f, 1.0f));
-						rad = 10.0f;
-					}
-	//				else continue;
-					if(drawJoint == idx)
-						gl::drawSphere(*it, rad, 32);
-				//	stringstream ss;
-			//		ss << idx;
-			//		gl::drawString(ss.str(), Vec2f(*it), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica);
-				}
+				gl::color(Color(1.0f, 1.0f, .0f));
+				
+				gl::drawSphere(Vec3f(center.pos.x, .0f, center.pos.z), 30.0f, 32);
+				gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
 			}
-			 */
 				
             world.draw();
 			
@@ -1012,7 +1083,6 @@ void SkelsApp::draw()
 			tl.setFont(helvetica32);
 			tr.setColor(Color(1.0f, 1.0f, 1.0f));
 			tr.setFont(helvetica32);
-
 
 			
 			stringstream ss, ss2;

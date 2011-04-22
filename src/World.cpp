@@ -11,6 +11,7 @@
 #include "Box3D.h"
 #include <time.h>
 #include "cinder/CinderMath.h"
+#include "Visuals.h"
 
 World::World()
 {
@@ -42,24 +43,38 @@ void World::draw()
 		ObjPtr obj = *obit;
 		
 		float rad = 20.0f;
-		
-		//glPushMatrix();
+
 		if(obj->soundActive)
 		{
 			gl::color(Color(.8f, .8f, 1.0f));
 			
-			rad += 20.0f * math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC) + 10.0f;
+			float clocksin = math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC);
+			
+			rad += 20.0f * math<float>::abs(clocksin) + 10.0f;
+			
+			gl::drawSphere(obj->pos, rad, 32);
+			
+			map<string, VisPtr>::iterator visIt;
+            for(visIt = gameState.visualsMap->begin(); visIt != gameState.visualsMap->end(); visIt++)
+            {
+                VisPtr v = (*visIt).second;
+                if(v->active)
+				{
+					glPushMatrix();
+					
+					gl::translate(obj->pos);
+					float sc = 10.0f * math<float>::abs(clocksin) + 5.0f;
+					gl::scale(Vec3f(sc, sc, sc));
+                    v->draw();
+					
+					glPopMatrix();
+				}
+            }
 		}
 		else
 		{
-			gl::color(Color(.2f, .2f, 1.0f));
+			//gl::color(Color(.2f, .2f, 1.0f));
 		}
-		gl::drawSphere(obj->pos, rad, 32);
-		
-		//gl::color(Color(.5f, .5f, 1.0f));
-		//gl::drawVector(gameState.player->pos, gameState.player->pos + (obj->pos-gameState.player->pos).normalized() * 100.0f);
-		
-		//glPopMatrix();
 	}
 	
 	for(obit = obstacles.begin(); obit != obstacles.end(); obit++)

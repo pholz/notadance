@@ -55,10 +55,12 @@ void VisualsItem1::draw()
 {
 	gl::color(Color(1, 1, 1));
     
+	/*
     gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
     CameraPersp cam( GLOBAL_W, GLOBAL_H, 50, 0.1, 10000 );
     cam.lookAt(Vec3f(.0f,  50.0f, 150.0f), Vec3f(.0f, .0f, .0f));
     gl::setMatrices(cam);
+	 */
     
     glBegin(GL_TRIANGLE_STRIP);
     
@@ -71,7 +73,7 @@ void VisualsItem1::draw()
     
     glEnd();
     
-    gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
+    //gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
 }
 
 void VisualsBump::init()

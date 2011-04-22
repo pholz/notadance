@@ -8,7 +8,7 @@
         </pos>
         <active>1</active>
 		<type>0</type>
-        <lifetime>200</lifetime>
+        <!--<lifetime>200</lifetime>-->
 		<mode>0</mode>
     </object>
     <object>
@@ -287,7 +287,7 @@
         </deactivatevisuals>
         
     </event>
-    
+   <!-- 
     <event>
         
         <objectname>item1</objectname>
@@ -310,7 +310,7 @@
         </deactivatevisuals>
         
     </event>
-    
+    -->
     <event>
         
         <objectname>exit2</objectname>
@@ -759,6 +759,7 @@
         
     </event>
 	
+	<!--
 	<event>
         
         <objectname>item21</objectname>
@@ -801,5 +802,6 @@
         </deactivatevisuals>
         
     </event>
+	 -->
     
 </events>
