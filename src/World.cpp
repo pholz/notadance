@@ -55,22 +55,27 @@ void World::draw()
 			gl::drawSphere(obj->pos, rad, 32);
 			
 			map<string, string> &objVisMap = *(gameState.objVisMap);
-			map<string,string>::iterator vit = objVisMap.find(obj->name);
-			if(vit != objVisMap.end())
+			
+			if(gameState.objVisMap)
 			{
-				map<string, VisPtr> &vmap = *(gameState.visualsMap);
-				VisPtr v = vmap[vit->second];
-				
-				if(v->active && v->type==1)
+			
+				map<string,string>::iterator vit = objVisMap.find(obj->name);
+				if(vit != objVisMap.end())
 				{
-					glPushMatrix();
+					map<string, VisPtr> &vmap = *(gameState.visualsMap);
+					VisPtr v = vmap[vit->second];
 					
-					gl::translate(obj->pos);
-					float sc = 4.0f;// * math<float>::abs(clocksin) + 5.0f;
-					gl::scale(Vec3f(sc, sc, sc));
-					v->draw();
-					
-					glPopMatrix();
+					if(v->active && v->type==1)
+					{
+						glPushMatrix();
+						
+						gl::translate(obj->pos);
+						float sc = 4.0f;// * math<float>::abs(clocksin) + 5.0f;
+						gl::scale(Vec3f(sc, sc, sc));
+						v->draw();
+						
+						glPopMatrix();
+					}
 				}
 			}
 		

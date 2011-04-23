@@ -123,9 +123,9 @@ enum AppState
 	SK_DETECTING,
 	SK_TRACKING,
 	SK_KEYBOARD,
-	SK_CLEARING_LEVEL,
 	SK_SHUTDOWN,
-    SK_INTRO
+    SK_INTRO,
+	SK_OUTRO
 };
 
 class SkelsApp : public AppBasic 
@@ -146,18 +146,31 @@ public:
 	void draw();
 	void keyDown( KeyEvent event );
 	void keyUp( KeyEvent event );
+	void shutdown();
+	
 	void renderBackground();
 	void renderPlayer();
-	void shutdown();
+	
 	void enterState(AppState s);
 	void startGame();
+	void startAudio();
 	
 	void initParams();
 	void initGame(GameMode gm);
 	void initOpenNI();
+	void resetOpenNI();
+	
 	void processCommandLineArguments();
 	void changeGameMode(GameMode gm);
-	void resetOpenNI();
+	
+	void foundPlayer();
+	void playIntro(GameMode gm);
+	void printFullState();
+	
+	float getGameTime();
+	void endGame();
+	void resetGame();
+
 	
 	ImageSourceRef getColorImage()
 	{
@@ -222,7 +235,10 @@ public:	// Members
 	AppState state, lastState;
 	bool bDebugMode;
 	string global_debug;
+	
 	bool game_running;
+	bool audio_running;
+	
 	bool debug_extra;
 	
 	// utils
@@ -280,6 +296,10 @@ public:	// Members
     map< string, gl::GlslProg > shadersMap;
     
     FlickrGen *flickr;
+	
+	// SCORE AND TIME
+	float gameTime;
+	float score;
 
 };
 
@@ -465,6 +485,9 @@ void SkelsApp::initGame(GameMode md)
 			o->vel = Vec3f(objxIt->getChild("vel/x").getValue<float>(), .0f, objxIt->getChild("vel/z").getValue<float>());
 		}
 		
+		if(objxIt->hasChild("final"))
+			o->final = true;
+		
 		o->mode = xMode;
     }
 	
@@ -585,9 +608,6 @@ void SkelsApp::initGame(GameMode md)
     
     events = shared_ptr<Events>(new Events(&gameState, oscManager, &xmlWorld));
 	
-	oscManager->send("/skels/gamemode", setting_gameMode);
-	
-	
 	game_running = false;
 }
 
@@ -626,7 +646,6 @@ void SkelsApp::setup()
 	debug_extra = true;
     setting_useKinect = true;
     setting_picsMode = 0;
-	setting_gameMode = SK_MODE_COLLECT;
 	kb_facing = Vec3f(.0f, .0f, -500.0f);
     massCenter = NULLVEC;
 	headrot = NULLVEC;
@@ -634,7 +653,9 @@ void SkelsApp::setup()
 	drawJoint = 0;
 	center.soundActive = true;
 	
-    
+	setting_gameMode = SK_MODE_COLLECT;
+	audio_running = false;
+	
     processCommandLineArguments();
 	
 	initOpenNI();
@@ -655,6 +676,8 @@ void SkelsApp::setup()
 	// setup game with game mode from command line
 	// ---------------------------------------------------------------------------
 	initGame(setting_gameMode);
+	
+	gameTime = .0f;
     enterState(SK_INTRO);
     
     // FMOD only
@@ -670,7 +693,7 @@ void SkelsApp::enterState(AppState s)
 	lastState = state;
 	state = s;
 	
-	console() << "enter state " << state << endl;
+	console() << "entering state " << state << endl;
 	
 	switch(s)
 	{
@@ -679,9 +702,6 @@ void SkelsApp::enterState(AppState s)
 		break;
 	case SK_KEYBOARD:
 		
-		break;
-	case SK_CLEARING_LEVEL:
-		oscManager->send("/skels/enterstate/clearlevel", 1.0f);
 		break;
 	default: ;
 	}
@@ -742,9 +762,11 @@ void SkelsApp::update()
 	// ---------------------------------------------------------------------------
 	else if(setting_useKinect && _manager->hasUsers() && _device0->getUserGenerator()->GetSkeletonCap().IsTracking(_manager->getFirstUser()->getId()) )
 	{
+		
+		// found user for the first time
 		if(state != SK_TRACKING)
 		{
-			enterState(SK_TRACKING);
+			foundPlayer();
 		}
         
         _device0->setLimits(mParam_nearClip, mParam_farClip);
@@ -884,7 +906,7 @@ void SkelsApp::update()
 	} else if (state == SK_KEYBOARD)
 	{
 		center.update(dt);
-		console() << center.pos << " / " << center.vel << endl;
+		//console() << center.pos << " / " << center.vel << endl;
 	}
 	
 	rot = math<float>::atan2(shoulders.z, shoulders.x);
@@ -918,72 +940,124 @@ void SkelsApp::update()
     oscManager->send("/skels/dbg/diffRightHand/y", diffRightHand.y);
     oscManager->send("/skels/dbg/diffRightHand/z", diffRightHand.z); 
 	
-	// world
+	// world & play update
 	// ---------------------------------------------------------------------------
 	
-	world.update(gameState, dt);
-    
-	vector<ObjPos> objPositions = world.getPositions();
-	
-	vector<ObjPos>::iterator opit;
-	for(opit = objPositions.begin(); opit != objPositions.end(); opit++)
+	if(game_running)
 	{
-		ObjPos op = *opit;
+		gameTime += dt;
+	
+		world.update(gameState, dt);
 		
-		if(op.obj->soundActive)
+		vector<ObjPos> objPositions = world.getPositions();
+		
+		vector<ObjPos>::iterator opit;
+		for(opit = objPositions.begin(); opit != objPositions.end(); opit++)
 		{
-			stringstream ss;
-			ss << "/skels/obj/" << op.obj->objID << "/dx";
-			oscManager->send(ss.str(), op.delta.x);
-			stringstream ss2;
-			ss2 << "/skels/obj/" << op.obj->objID << "/dz";
-			oscManager->send(ss2.str(), -op.delta.z);
+			ObjPos op = *opit;
 			
-			// check if player has collected a sound
-			if(op.obj->mode == SK_MODE_COLLECT && op.distance < mParam_collectDistance)
+			if(op.obj->soundActive)
 			{
-				oscManager->send("/skels/event/collect", op.obj->objID);
-				events->event(op.obj->name, "EVENT_COLLECT");
-			} 
-			else if(op.obj->mode == SK_MODE_CATCH)
-			{
-				if(op.distance < mParam_catchDistance)
+				stringstream ss;
+				ss << "/skels/obj/" << op.obj->objID << "/dx";
+				oscManager->send(ss.str(), op.delta.x);
+				stringstream ss2;
+				ss2 << "/skels/obj/" << op.obj->objID << "/dz";
+				oscManager->send(ss2.str(), -op.delta.z);
+				
+				// check if player has collected a sound
+				if(op.obj->mode == SK_MODE_COLLECT && op.distance < mParam_collectDistance)
 				{
-					if(diffRightHand.y > 40.0f || diffLeftHand.y > 40.0f)
+					oscManager->send("/skels/event/collect", op.obj->objID);
+					events->event(op.obj->name, "EVENT_COLLECT");
+					
+					// TODO so ugly. put collect conditions into xml & events.
+					if(op.obj->final)
 					{
+						bool found = false;
+						vector<ObjPos>::iterator opit2;
+						for(opit2 = objPositions.begin(); opit2 != objPositions.end(); opit2++)
+							if( opit2->obj != op.obj && opit2->obj->final && opit2->obj->soundActive)
+								found = true;
+						
+						if(!found)
+						{
+						
+							console() << "completed mode 0 at time: " << getGameTime() << endl;
+							changeGameMode(SK_MODE_CATCH);
+						}
+					}
+				} 
+				else if(op.obj->mode == SK_MODE_CATCH)
+				{
+					if(op.distance < mParam_catchDistance)
+					{
+						if(diffRightHand.y > 40.0f || diffLeftHand.y > 40.0f || state == SK_KEYBOARD)
+						{
+							oscManager->send("/skels/event/collect", op.obj->objID);
+							events->event(op.obj->name, "EVENT_COLLECT");
+							
+							if(op.obj->final)
+							{
+								
+								// TODO so ugly. put collect conditions into xml & events.
+								if(op.obj->final)
+								{
+									bool found = false;
+									vector<ObjPos>::iterator opit2;
+									for(opit2 = objPositions.begin(); opit2 != objPositions.end(); opit2++)
+										if( opit2->obj != op.obj && opit2->obj->final && opit2->obj->soundActive)
+											found = true;
+									
+									if(!found)
+									{
+										console() << "completed mode 1 at time: " << getGameTime() << endl;
+										changeGameMode(SK_MODE_MATCH);
+									}
+								}
+							}
+						}
+					}
+					
+					if(op.obj->pos.x < -mParam_boundsX || op.obj->pos.x > mParam_boundsX ||
+					   op.obj->pos.z < -mParam_boundsZ || op.obj->pos.z > mParam_boundsZ)
+					{
+						oscManager->send("/skels/event/expire", op.obj->objID);
+						events->event(op.obj->name, "EVENT_EXPIRE");
+					}
+					
+					
+				}
+				else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance)
+				{
+					if(gameState.matchRegistered || state == SK_KEYBOARD)
+					{
+						gameState.matchRegistered = 0;
 						oscManager->send("/skels/event/collect", op.obj->objID);
 						events->event(op.obj->name, "EVENT_COLLECT");
+						
+						if(op.obj->final)
+						{
+							console() << "completed mode 2 at time: " << getGameTime() << endl;
+							
+							endGame();
+						}
 					}
 				}
 				
-				if(op.obj->pos.x < -mParam_boundsX || op.obj->pos.x > mParam_boundsX ||
-				   op.obj->pos.z < -mParam_boundsZ || op.obj->pos.z > mParam_boundsZ)
+				// expiration
+				if(op.obj->isExpired())
 				{
 					oscManager->send("/skels/event/expire", op.obj->objID);
-				//	events->event(op.obj->name, "EVENT_EXPIRE");
+					
+					events->event(op.obj->name, "EVENT_EXPIRE");
 				}
 			}
-			else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance)
-			{
-				if(gameState.matchRegistered)
-				{
-					gameState.matchRegistered = 0;
-					oscManager->send("/skels/event/collect", op.obj->objID);
-					events->event(op.obj->name, "EVENT_COLLECT");
-				}
-			}
-            
-            // expiration
-            if(op.obj->isExpired())
-            {
-                oscManager->send("/skels/event/expire", op.obj->objID);
-                
-				events->event(op.obj->name, "EVENT_EXPIRE");
-            }
+			
+			
 		}
 		
-		
-	}
+	} // endif game_running
     
     // update visuals
     // -------
@@ -1095,7 +1169,8 @@ void SkelsApp::draw()
 				gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
 			}
 				
-            world.draw();
+			if(game_running)
+				world.draw();
 			
 		} // endif state tracking
 		
@@ -1207,6 +1282,14 @@ void SkelsApp::draw()
             tl.addLine("intro");
             gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/6, HEIGHT/4));
         }
+		else if(state == SK_OUTRO)
+		{
+			stringstream ss;
+			ss << "total time: " << score;
+			
+			gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+		}
+		
         else
         {
             gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
@@ -1215,10 +1298,22 @@ void SkelsApp::draw()
 	
 }
 
+void SkelsApp::startAudio()
+{
+	console() << "starting audio" << endl;
+	
+	oscManager->send("/skels/start", 1.0f);
+
+	audio_running = true;
+	
+}
 
 void SkelsApp::startGame()
 {
-	oscManager->send("/skels/start", 1.0f);
+	console() << "starting game" << endl;
+	
+	oscManager->send("/skels/startGame", 1.0f);
+	
 	center.setActive(true);
 	
 	vector<ObjPtr>::iterator obit;
@@ -1251,11 +1346,29 @@ void SkelsApp::keyDown( KeyEvent event )
         if(state == SK_INTRO)
         {
             enterState(SK_DETECTING);
+			printFullState();
         }
-        else
+        else if(state == SK_KEYBOARD)
         {
-            startGame();
+            if(!audio_running)
+			{
+				startAudio();
+				playIntro(setting_gameMode);
+				
+				printFullState();
+			}
+			else if(!game_running)
+			{
+				startGame();
+				
+				printFullState();
+			}
         }
+		else if(state == SK_OUTRO)
+		{
+			resetOpenNI();
+			resetGame();
+		}
         
 	}
 	
@@ -1279,6 +1392,11 @@ void SkelsApp::keyDown( KeyEvent event )
 	else if( event.getChar() == 'r' )
 	{
 		resetOpenNI();
+	}
+	
+	else if(event.getChar() == 'p' )
+	{
+		printFullState();
 	}
 	
 	else if(state == SK_KEYBOARD)
@@ -1321,6 +1439,25 @@ void SkelsApp::keyUp( KeyEvent event )
 	}
 }
 
+void SkelsApp::foundPlayer()
+{
+	startAudio();
+	playIntro(setting_gameMode);
+	console() << "found player" << endl;
+	enterState(SK_TRACKING);
+	
+	printFullState();
+}
+
+void SkelsApp::playIntro(GameMode gm)
+{
+	console() << "playing intro" << endl;
+	//oscManager->send("/skels/event/playIntro", (int) gm);
+	oscManager->send("/skels/gamemode", gm);
+	
+	printFullState();
+}
+
 void SkelsApp::resetOpenNI()
 {
 	_manager->removeUser(1);
@@ -1330,7 +1467,7 @@ void SkelsApp::resetOpenNI()
 
 void SkelsApp::changeGameMode(GameMode gm)
 {
-	console() << "changing game mode to " << (int)gm;
+	console() << "changing game mode to " << (int)gm << endl;
 	
 	xmlWorld = XmlTree();
 	world = World();
@@ -1339,12 +1476,42 @@ void SkelsApp::changeGameMode(GameMode gm)
 		oscManager->send("/skels/event/objon", i, 0);
 	
 	initGame(gm);
-	startGame();
+	
+	playIntro(setting_gameMode);
+	
+	//startGame();
+}
+
+void SkelsApp::printFullState()
+{
+	console() << "state: " << state << "\t audio on: " << audio_running << "\t game on: " << game_running << "\t gamemode: " << setting_gameMode << endl;
+}
+
+float SkelsApp::getGameTime()
+{
+	return gameTime;
+}
+
+void SkelsApp::endGame()
+{
+	oscManager->send("/skels/startgame", 0.0f);
+	enterState(SK_OUTRO);
+	oscManager->send("/skels/event/outro", 1.0f);
+	
+	score = getGameTime();
+}
+
+void SkelsApp::resetGame()
+{
+	gameTime = .0f;
 }
 
 void SkelsApp::shutdown()
 {
+	enterState(SK_SHUTDOWN);
+	
 	oscManager->send("/skels/stop", 1.0f);
+	oscManager->send("/skels/startgame", 0.0f);
     
     if(setting_useKinect)
         _manager->destroyAll();

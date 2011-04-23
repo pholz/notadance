@@ -94,7 +94,7 @@ void VisualsItem1::draw()
 		
 		
 		
-		cout << avg << endl;
+	//	cout << avg << endl;
 		
 		float startRad = step * i * 4;
 		float endRad = step * (i+3) *4;

@@ -57,6 +57,7 @@
         <active>0</active>
 		<type>0</type>
 		<mode>0</mode>
+		<final>1</final>
     </object>
 	
 	<object>
@@ -69,6 +70,7 @@
         <active>0</active>
 		<type>0</type>
 		<mode>0</mode>
+		<final>1</final>
     </object>
 	
 	<object>
@@ -152,6 +154,7 @@
         <active>0</active>
 		<type>2</type>
 		<mode>1</mode>
+		<final>1</final>
     </object>
 	
 	<object>
@@ -168,6 +171,7 @@
         <active>0</active>
 		<type>2</type>
 		<mode>1</mode>
+		<final>1</final>
     </object>
 	
 	<object>
@@ -192,6 +196,7 @@
         <active>0</active>
 		<type>3</type>
 		<mode>2</mode>
+		<final>1</final>
     </object>
 	
 </objects>

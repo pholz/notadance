@@ -49,8 +49,8 @@ Events::Events(GameState *gs, OscManager *mgr, XmlTree *tree)
         
         
         Conditions c(xObjectname, xType);
-        cout << "adding " << xObjectname << "|" << xType << endl;
-        cout << iter << endl << " __________ " << endl;
+        //cout << "adding " << xObjectname << "|" << xType << endl;
+        //cout << iter << endl << " __________ " << endl;
         conditionsActions[c] = Actions(vecNextObj, vecNextVis, vecDeObj, vecDeVis);
         
 		/*

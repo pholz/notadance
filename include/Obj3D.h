@@ -65,6 +65,7 @@ public:
         active = false;
         expired = lifetime = .0f;
 		type = 0;
+		final = false;
 	}
     
     void setLifetime(float lt)
@@ -144,6 +145,7 @@ public:
     float           lifetime, expired;
 	int				type; // 0 = memory, 1 = other
 	int				mode;
+	bool			final;
 	
 };
 
