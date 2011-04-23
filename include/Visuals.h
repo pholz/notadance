@@ -46,6 +46,8 @@ public:
     float lifetime, expired;
     
     Rand rand;
+	
+	int type; //0=global, 1=local
 };
 
 typedef shared_ptr<Visuals> VisPtr;
@@ -53,7 +55,7 @@ typedef shared_ptr<Visuals> VisPtr;
 class VisualsItem1 : public Visuals
 {
 public:
-    VisualsItem1(int _id, string _name) : Visuals(_id, _name) { init(); }
+    VisualsItem1(int _id, string _name) : Visuals(_id, _name) { type = 1; init(); }
     void init();
     void draw();
 };
@@ -93,7 +95,7 @@ class VisualsCollect : public Visuals
 public:
     VisualsCollect(int _id, string _name, vector<gl::Texture> *texs, 
                    map<string, gl::GlslProg> *progMap) : Visuals(_id, _name) 
-    { init(texs, progMap); }
+    { type = 0; init(texs, progMap); }
     
     void init(vector<gl::Texture> *texs, map<string, gl::GlslProg> *progMap);
     void draw();

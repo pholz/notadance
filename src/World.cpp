@@ -46,30 +46,34 @@ void World::draw()
 
 		if(obj->soundActive)
 		{
-			gl::color(Color(.8f, .8f, 1.0f));
+			gl::color(Color(1.0f, 1.0f, 1.0f));
 			
 			float clocksin = math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC);
 			
-			rad += 20.0f * math<float>::abs(clocksin) + 10.0f;
+			//rad += 20.0f * math<float>::abs(clocksin) + 10.0f;
 			
 			gl::drawSphere(obj->pos, rad, 32);
 			
-			map<string, VisPtr>::iterator visIt;
-            for(visIt = gameState.visualsMap->begin(); visIt != gameState.visualsMap->end(); visIt++)
-            {
-                VisPtr v = (*visIt).second;
-                if(v->active)
+			map<string, string> &objVisMap = *(gameState.objVisMap);
+			map<string,string>::iterator vit = objVisMap.find(obj->name);
+			if(vit != objVisMap.end())
+			{
+				map<string, VisPtr> &vmap = *(gameState.visualsMap);
+				VisPtr v = vmap[vit->second];
+				
+				if(v->active && v->type==1)
 				{
 					glPushMatrix();
 					
 					gl::translate(obj->pos);
-					float sc = 10.0f * math<float>::abs(clocksin) + 5.0f;
+					float sc = 4.0f;// * math<float>::abs(clocksin) + 5.0f;
 					gl::scale(Vec3f(sc, sc, sc));
-                    v->draw();
+					v->draw();
 					
 					glPopMatrix();
 				}
-            }
+			}
+		
 		}
 		else
 		{

@@ -53,7 +53,7 @@ void VisualsItem1::init()
 
 void VisualsItem1::draw()
 {
-	gl::color(Color(1, 1, 1));
+	gl::color(ColorA(1, 1, 1, .5f));
     
 	/*
     gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
@@ -62,6 +62,7 @@ void VisualsItem1::draw()
     gl::setMatrices(cam);
 	 */
     
+	/*
     glBegin(GL_TRIANGLE_STRIP);
     
     for(int i = 0; i < SAMPLE_WINDOW_SIZE; i++)
@@ -72,6 +73,43 @@ void VisualsItem1::draw()
     }
     
     glEnd();
+	 */
+	
+	float step = 2.0f*M_PI / (float) SAMPLE_WINDOW_SIZE;
+	for(int i = 0; i < SAMPLE_WINDOW_SIZE/4; i+=4)
+    {
+		
+		float avg = 0.0f;
+		for(int j = 0; j < 4; j++)
+		{
+			avg += math<float>::log(spectrum[i+j]);
+		}
+		
+		if(avg >= DBL_MAX || avg <= -DBL_MAX)
+			avg = 1.0f;
+		else{
+			avg	/= 4.0f;
+			avg += 10.0f;
+		}
+		
+		
+		
+		cout << avg << endl;
+		
+		float startRad = step * i * 4;
+		float endRad = step * (i+3) *4;
+		float scale = 20.0f;
+		
+		glBegin(GL_TRIANGLE_FAN);
+		
+		glVertex3f(math<float>::cos(startRad)*scale,			0.0f, math<float>::sin(startRad)*scale);
+		glVertex3f(math<float>::cos(startRad)*scale*(1+avg),	0.0f, math<float>::sin(startRad)*scale*(1+avg));
+		glVertex3f(math<float>::cos(endRad)*scale*(1+avg),		0.0f, math<float>::sin(endRad)*scale*(1+avg));
+		glVertex3f(math<float>::cos(endRad)*scale,				0.0f, math<float>::sin(endRad)*scale);
+		
+		glEnd();
+    }
+	
     
     //gl::setMatricesWindow( GLOBAL_W, GLOBAL_H);
 }

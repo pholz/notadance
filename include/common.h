@@ -21,6 +21,7 @@ typedef struct
 	Obj3D                   *player;
     map<string, ObjPtr>     *objectsMap;
     map<string, VisPtr>     *visualsMap;
+	map<string, string>		*objVisMap;
 	
 	bool					matchRegistered;
 } GameState;

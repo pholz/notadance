@@ -13,7 +13,7 @@
     </object>
     <object>
         <id>2</id>
-        <name>exit2</name>
+        <name>item2</name>
         <pos>
             <x>-900</x>
             <z>1400</z>
@@ -37,7 +37,7 @@
     
     <object>
         <id>4</id>
-        <name>exit4</name>
+        <name>item4</name>
         <pos>
             <x>1500</x>
             <z>-900</z>
@@ -271,11 +271,12 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-            <objectname>exit2</objectname>
+            <objectname>item2</objectname>
         </nextobjects>
         
         <nextvisuals>
             <visualsname>vis_collect_i1</visualsname>
+			<visualsname>vis_item2</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -294,7 +295,7 @@
         <type>EVENT_EXPIRE</type>
         
         <nextobjects>
-            <objectname>exit2</objectname>
+            <objectname>item2</objectname>
         </nextobjects>
         
         <nextvisuals>
@@ -313,7 +314,7 @@
     -->
     <event>
         
-        <objectname>exit2</objectname>
+        <objectname>item2</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
@@ -322,12 +323,12 @@
         </nextobjects>
         
         <nextvisuals>
-            <visualsname>vis_collect_exit</visualsname>
+            <visualsname>vis_collect_item2</visualsname>
 			<visualsname>vis_item3</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>exit2</objectname>
+            <objectname>item2</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
@@ -363,11 +364,12 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
-            <objectname>exit4</objectname>
+            <objectname>item4</objectname>
         </nextobjects>
         
         <nextvisuals>
             <visualsname>vis_collect_i3</visualsname>
+			<visualsname>vis_item4</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -382,7 +384,7 @@
     
     <event>
         
-        <objectname>exit4</objectname>
+        <objectname>item4</objectname>
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
@@ -396,7 +398,7 @@
         </nextvisuals>
         
         <deactivateobjects>
-            <objectname>exit4</objectname>
+            <objectname>item4</objectname>
         </deactivateobjects>
         
         <deactivatevisuals>
@@ -459,6 +461,7 @@
         
         <nextvisuals>
             <visualsname>vis_collect_i11</visualsname>
+			<visualsname>vis_item12</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -481,6 +484,7 @@
         
         <nextvisuals>
             <visualsname>vis_collect_i12</visualsname>
+			<visualsname>vis_item13</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -504,6 +508,7 @@
         
         <nextvisuals>
             <visualsname>vis_collect_i13</visualsname>
+			<visualsname>vis_item14</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -528,6 +533,8 @@
         
         <nextvisuals>
             <visualsname>vis_collect_i14</visualsname>
+			<visualsname>vis_item15</visualsname>
+			<visualsname>vis_item16</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -725,6 +732,7 @@
         
         <nextvisuals>
             <visualsname>vis_collect_i21</visualsname>
+			<visualsname>vis_item22</visualsname>
         </nextvisuals>
         
         <deactivateobjects>

@@ -258,6 +258,7 @@ public:	// Members
 	map<string, int> objIDs;
 	map<string, ObjPtr> objectsMap;
     map<string, VisPtr> visualsMap;
+	map<string, string> objVisMap;
     
     shared_ptr<Events> events;
     
@@ -426,6 +427,7 @@ void SkelsApp::initGame(GameMode md)
     gameState.visualsMap = &visualsMap;
     gameState.objectsMap = &objectsMap;
     gameState.matchRegistered = false;
+	gameState.objVisMap = &objVisMap;
     
     xmlWorld = XmlTree( loadResource(RES_WORLD) );
     
@@ -499,13 +501,45 @@ void SkelsApp::initGame(GameMode md)
     visualsMap[v->name] = v;
     v->setActive(true);
     
+	v.reset(new VisualsItem1(11, "vis_item2"));
+	visualsMap[v->name] = v;
+	
 	v.reset(new VisualsItem1(8, "vis_item3"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(12, "vis_item4"));
 	visualsMap[v->name] = v;
 	
 	v.reset(new VisualsItem1(9, "vis_item5"));
 	visualsMap[v->name] = v;
 	
 	v.reset(new VisualsItem1(10, "vis_item6"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(13, "vis_item11"));
+	visualsMap[v->name] = v;
+	v->setActive(true);
+	
+	v.reset(new VisualsItem1(14, "vis_item12"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(15, "vis_item13"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(16, "vis_item14"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(17, "vis_item15"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(18, "vis_item16"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(19, "vis_item21"));
+	visualsMap[v->name] = v;
+	v->setActive(true);
+	
+	v.reset(new VisualsItem1(20, "vis_item22"));
 	visualsMap[v->name] = v;
 	
     v.reset(new VisualsBump(2, "vis_bump"));
@@ -525,6 +559,23 @@ void SkelsApp::initGame(GameMode md)
 	
 	v.reset(new VisualsCollect(7, "vis_collect_i6", &(texturesMap["item6"]), &shadersMap));
     visualsMap[v->name] = v;
+	
+	objVisMap["item1"] = "vis_item1";
+	objVisMap["item2"] = "vis_item2";
+	objVisMap["item3"] = "vis_item3";
+	objVisMap["item4"] = "vis_item4";
+	objVisMap["item5"] = "vis_item5";
+	objVisMap["item6"] = "vis_item6";
+	
+	objVisMap["item11"] = "vis_item11";
+	objVisMap["item12"] = "vis_item12";
+	objVisMap["item13"] = "vis_item13";
+	objVisMap["item14"] = "vis_item14";
+	objVisMap["item15"] = "vis_item15";
+	objVisMap["item16"] = "vis_item16";
+	
+	objVisMap["item21"] = "vis_item21";
+	objVisMap["item22"] = "vis_item22";
 	
 	
 	bDebugMode = DEBUGMODE;
@@ -1130,7 +1181,7 @@ void SkelsApp::draw()
             for(visIt = visualsMap.begin(); visIt != visualsMap.end(); visIt++)
             {
                 VisPtr v = (*visIt).second;
-                if(v->active)
+                if(v->active && v->type==0)
                     v->draw();
             }
             
