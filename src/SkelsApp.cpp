@@ -764,7 +764,7 @@ void SkelsApp::update()
 	{
 		
 		// found user for the first time
-		if(state != SK_TRACKING)
+		if(state == SK_DETECTING)
 		{
 			foundPlayer();
 		}
@@ -1366,7 +1366,8 @@ void SkelsApp::keyDown( KeyEvent event )
         }
 		else if(state == SK_OUTRO)
 		{
-			resetOpenNI();
+			if(setting_useKinect)
+				resetOpenNI();
 			resetGame();
 		}
         
@@ -1460,7 +1461,7 @@ void SkelsApp::playIntro(GameMode gm)
 
 void SkelsApp::resetOpenNI()
 {
-	_manager->removeUser(1);
+	_manager->removeUser(_manager->getFirstUser()->getId());
 	enterState(SK_DETECTING);
 	
 }
@@ -1499,11 +1500,16 @@ void SkelsApp::endGame()
 	oscManager->send("/skels/event/outro", 1.0f);
 	
 	score = getGameTime();
+	game_running = false;
 }
 
 void SkelsApp::resetGame()
 {
 	gameTime = .0f;
+	//changeGameMode(SK_MODE_COLLECT);
+
+	setting_gameMode = SK_MODE_COLLECT;
+	enterState(SK_DETECTING);
 }
 
 void SkelsApp::shutdown()
