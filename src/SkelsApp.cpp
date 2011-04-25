@@ -217,7 +217,7 @@ public:	// Members
 	Vec3f windowCenter, diffLeftHand, diffRightHand, massCenter, leftShoulder, rightShoulder, shoulders_norm, kb_facing, headrot, diffLElbow, diffRElbow;
     
     float confidenceLH, confidenceRH, confidenceCenter;
-	float lx, ly, lz, rot, maxrot;
+	float lx, ly, lz, rot, maxrot, fheadrot;
 	int drawJoint;
 	World world;
 	GameState gameState;
@@ -652,6 +652,7 @@ void SkelsApp::setup()
     confidenceLH = confidenceRH = confidenceCenter = .0f;
 	drawJoint = 0;
 	center.soundActive = true;
+	fheadrot = .0f;
 	
 	setting_gameMode = SK_MODE_COLLECT;
 	audio_running = false;
@@ -735,7 +736,7 @@ void SkelsApp::update()
         mColorTex.update( getColorImage() );
         mDepthTex.update( getDepthImage() );	// Histogram
         
-        if( _manager->hasUsers() && _manager->hasUser(1) ) mOneUserTex.update( getUserColorImage(1) );
+        if( _manager->hasUsers() && _manager->hasUser(_manager->getFirstUser()->getId()) ) mOneUserTex.update( getUserColorImage(_manager->getFirstUser()->getId()) );
     }
     
 	
@@ -902,6 +903,10 @@ void SkelsApp::update()
 	if(state == SK_TRACKING)
 	{
 		center.pos = massCenter * Vec3f(10.0f, 0.0f, 10.0f);
+		
+		float zfactor = lmap(center.pos.z, -2000.0f, 5500.0f, 1.0f, 2.5f);
+		center.pos.x *= zfactor;
+		
 		shoulders = leftShoulder - rightShoulder;
 	} else if (state == SK_KEYBOARD)
 	{
@@ -909,8 +914,14 @@ void SkelsApp::update()
 		//console() << center.pos << " / " << center.vel << endl;
 	}
 	
-	rot = math<float>::atan2(shoulders.z, shoulders.x);
-	rot = math<float>::floor(rot*100.0f + 0.5f)/100.0f;
+	float newrot = math<float>::atan2(shoulders.z, shoulders.x);
+	newrot = math<float>::floor(newrot*100.0f + 0.5f)/100.0f;
+	
+	 
+	oscManager->send("/skels/deltarot", math<float>::abs(newrot-rot));
+	
+	if(math<float>::abs(newrot-rot) > 0.05)
+		rot = newrot;
 
 	shoulders.y = .0f;
 	
@@ -925,13 +936,18 @@ void SkelsApp::update()
 		sounds.updateListener(center.pos, center.vel, shoulders_norm, Vec3f(.0f, 1.0f, .0f));
 	}
 	
+	float newfheadrot = math<float>::atan2(headrot.z, headrot.x);
+	if(math<float>::abs(newfheadrot-fheadrot) > 0.05)
+		fheadrot = newfheadrot;
+	
 	// send OSC updates to Max
 	// ---------------------------------------------------------------------------
 	
 	oscManager->send("/skels/center/x", center.pos.x);
 	oscManager->send("/skels/center/z", center.pos.z);
 	oscManager->send("/skels/rot", rot);
-	oscManager->send("/skels/headrot", math<float>::atan2(headrot.z, headrot.x));
+	oscManager->send("/skels/headrot", fheadrot);
+	
     
     oscManager->send("/skels/dbg/diffLeftHand/x", diffLeftHand.x);
     oscManager->send("/skels/dbg/diffLeftHand/y", diffLeftHand.y);
@@ -1169,6 +1185,14 @@ void SkelsApp::draw()
 				gl::drawVector(Vec3f(center.pos.x, .0f, center.pos.z), Vec3f(center.pos.x + shoulders_norm.x * 30, .0f, center.pos.z + shoulders_norm.z * 30), 40, 60);
 			}
 				
+//			gl::color(Color(1.0f, .0f, .0f));
+//			gl::drawSphere( Vec3f(-2500.0f, .0f, -2000.0f), 50.0f, 12 );
+			
+//			gl::drawSphere( Vec3f(2500.0f, .0f, -2000.0f), 50.0f, 12 );
+//			gl::drawSphere( Vec3f(-2500.0f, .0f, 5500.0f), 50.0f, 12 );
+//			gl::drawSphere( Vec3f(2500.0f, .0f, 5500.0f), 50.0f, 12 );
+			
+			
 			if(game_running)
 				world.draw();
 			
@@ -1400,6 +1424,11 @@ void SkelsApp::keyDown( KeyEvent event )
 		printFullState();
 	}
 	
+	else if(event.getChar() == 'e')
+	{
+		endGame();
+	}
+	
 	else if(state == SK_KEYBOARD)
 		switch(event.getChar())
 		{
@@ -1461,9 +1490,14 @@ void SkelsApp::playIntro(GameMode gm)
 
 void SkelsApp::resetOpenNI()
 {
-	_manager->removeUser(_manager->getFirstUser()->getId());
+	if(_manager->hasUsers())
+	{
+		console() << "removing user " << _manager->getFirstUser()->getId() << endl;
+		_manager->removeUser(_manager->getFirstUser()->getId());
+	}
 	enterState(SK_DETECTING);
 	
+	_manager->addUser(_device0->getUserGenerator(), 1);
 }
 
 void SkelsApp::changeGameMode(GameMode gm)
@@ -1495,8 +1529,14 @@ float SkelsApp::getGameTime()
 
 void SkelsApp::endGame()
 {
+	console() << "ending game..." << endl;
+	
+	console() << "osc >> startgame 0" << endl;
 	oscManager->send("/skels/startgame", 0.0f);
+	
 	enterState(SK_OUTRO);
+	
+	console() << "osc >> event/outro 1" << endl;
 	oscManager->send("/skels/event/outro", 1.0f);
 	
 	score = getGameTime();
@@ -1505,6 +1545,7 @@ void SkelsApp::endGame()
 
 void SkelsApp::resetGame()
 {
+	console() << "resetting game..." << endl;
 	gameTime = .0f;
 	//changeGameMode(SK_MODE_COLLECT);
 

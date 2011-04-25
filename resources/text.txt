@@ -7,3 +7,5 @@ start the game by raising your hand once.
 there are more sounds. they are now composed of two tones each. you can produce similar tones by raising your hands.
 collect all the sounds. to collect a sound, get close to it and use your hands to match your tones with the sound.
 start the game by raising your hand once.
+
+you have completed the game. the audience knows your score. thank you for playing.
