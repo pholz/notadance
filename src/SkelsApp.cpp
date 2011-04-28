@@ -153,6 +153,12 @@ public:
 	
 	void enterState(AppState s);
 	void startGame();
+	void pauseGame();
+	void resumeGame();
+	float getGameTime();
+	void endGame();
+	void resetGame();
+	
 	void startAudio();
 	
 	void initParams();
@@ -166,10 +172,9 @@ public:
 	void foundPlayer();
 	void playIntro(GameMode gm);
 	void printFullState();
+	void printDebugInfo();
 	
-	float getGameTime();
-	void endGame();
-	void resetGame();
+	//void callback_userAdded(uint32_t id);
 
 	
 	ImageSourceRef getColorImage()
@@ -261,6 +266,7 @@ public:	// Members
     float mParam_farClip;
     float mParam_armYMoveThresh;
 	float mParam_walkXScale, mParam_walkZScale;
+	float mParam_ONISkeletonSmoothing;
 	
 	float mParam_boundsX, mParam_boundsZ;
 	
@@ -341,6 +347,8 @@ void SkelsApp::initParams()
 	mParam_boundsX		=			3100.0f;
 	mParam_boundsZ		=			3100.0f;
 	
+	mParam_ONISkeletonSmoothing =	0.2f;
+	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex",				&mParam_scaleX,		"min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
@@ -371,6 +379,8 @@ void SkelsApp::initParams()
 	
 	mParams.addParam( "boundsX",     &mParam_boundsX, "min=500 max=4000 step=10" );
 	mParams.addParam( "boundsZ",     &mParam_boundsZ, "min=500 max=4000 step=10" );
+	
+	mParams.addParam( "SkeletonSmooth", &mParam_ONISkeletonSmoothing, "min=0.0 max=5.0 step=0.05");
     
     
 	helvetica12 = Font("Menlo", 16) ;
@@ -817,6 +827,10 @@ void SkelsApp::update()
 				if(idx == SK_SKEL_HEAD)
 				{
 					headrot = Vec3f(bone.orientation[0], bone.orientation[1], bone.orientation[2]);
+					
+//					for(int n = 0; n < 9; n++)
+//						console() << bone.orientation[n] << ", ";
+//					console() << endl;
 				}
 				if(idx == SK_SKEL_WAIST) 
 				{
@@ -904,6 +918,7 @@ void SkelsApp::update()
 	{
 		center.pos = massCenter * Vec3f(10.0f, 0.0f, 10.0f);
 		
+		// compensate for perspective distortion of the x values at different z depths
 		float zfactor = lmap(center.pos.z, -2000.0f, 5500.0f, 1.0f, 2.5f);
 		center.pos.x *= zfactor;
 		
@@ -920,6 +935,7 @@ void SkelsApp::update()
 	 
 	oscManager->send("/skels/deltarot", math<float>::abs(newrot-rot));
 	
+	// noise filtering
 	if(math<float>::abs(newrot-rot) > 0.05)
 		rot = newrot;
 
@@ -1353,6 +1369,15 @@ void SkelsApp::startGame()
 	game_running = true;
 }
 
+void SkelsApp::pauseGame()
+{
+	game_running = false;
+}
+
+void SkelsApp::resumeGame()
+{
+	game_running = true;
+}
 
 void SkelsApp::keyDown( KeyEvent event )
 {
@@ -1421,12 +1446,25 @@ void SkelsApp::keyDown( KeyEvent event )
 	
 	else if(event.getChar() == 'p' )
 	{
-		printFullState();
+		printDebugInfo();
 	}
 	
 	else if(event.getChar() == 'e')
 	{
 		endGame();
+	}
+	
+	else if(event.getChar() == 't')
+	{
+		enterState(SK_TRACKING);
+	}
+	
+	else if(event.getChar() == ',')
+	{
+		if(_manager->hasUsers())
+		{
+			_manager->getFirstUser()->setSkeletonSmoothing(mParam_ONISkeletonSmoothing);
+		}
 	}
 	
 	else if(state == SK_KEYBOARD)
@@ -1471,17 +1509,22 @@ void SkelsApp::keyUp( KeyEvent event )
 
 void SkelsApp::foundPlayer()
 {
-	startAudio();
-	playIntro(setting_gameMode);
+	
 	console() << "found player" << endl;
 	enterState(SK_TRACKING);
+	
+	if(!audio_running)
+	{
+		startAudio();
+		playIntro(setting_gameMode);
+	}
 	
 	printFullState();
 }
 
 void SkelsApp::playIntro(GameMode gm)
 {
-	console() << "playing intro" << endl;
+	console() << "playing intro ..." << endl;
 	//oscManager->send("/skels/event/playIntro", (int) gm);
 	oscManager->send("/skels/gamemode", gm);
 	
@@ -1490,6 +1533,8 @@ void SkelsApp::playIntro(GameMode gm)
 
 void SkelsApp::resetOpenNI()
 {
+	console() << "resetting OpenNI ..." << endl;
+	
 	if(_manager->hasUsers())
 	{
 		console() << "removing user " << _manager->getFirstUser()->getId() << endl;
@@ -1497,7 +1542,11 @@ void SkelsApp::resetOpenNI()
 	}
 	enterState(SK_DETECTING);
 	
-	_manager->addUser(_device0->getUserGenerator(), 1);
+	//_manager->addUser(_device0->getUserGenerator(), 1);
+	
+	_device0->requestUserCalibration();
+	
+	pauseGame();
 }
 
 void SkelsApp::changeGameMode(GameMode gm)
@@ -1529,7 +1578,7 @@ float SkelsApp::getGameTime()
 
 void SkelsApp::endGame()
 {
-	console() << "ending game..." << endl;
+	console() << "ending game ..." << endl;
 	
 	console() << "osc >> startgame 0" << endl;
 	oscManager->send("/skels/startgame", 0.0f);
@@ -1549,7 +1598,8 @@ void SkelsApp::resetGame()
 	gameTime = .0f;
 	//changeGameMode(SK_MODE_COLLECT);
 
-	setting_gameMode = SK_MODE_COLLECT;
+	changeGameMode(SK_MODE_COLLECT);
+
 	enterState(SK_DETECTING);
 }
 
@@ -1567,5 +1617,34 @@ void SkelsApp::shutdown()
     
 	delete oscManager;
 }
+
+void SkelsApp::printDebugInfo()
+{
+	printFullState();
+	
+	int numusers = _manager->getNumOfUsers();
+	
+	if(numusers)
+		console() << "ONI: users: " << numusers << "\t1st user: " << _manager->getFirstUser()->getId() << "\tstate: " << _manager->getFirstUser()->getUserState() << endl;
+	else
+		console() << "ONI: no users" << endl;
+	
+	console() << "active items: ";
+	vector<ObjPtr>::iterator it;
+	for(it = world.things.begin(); it != world.things.end(); it++)
+	{
+		ObjPtr o = *it;
+		
+		if(o->soundActive)
+			console() << o->name + ", ";
+	}
+	
+	console() << endl;
+}
+
+//void SkelsApp::callback_userAdded(uint32_t id)
+//{
+//	console() << "user added callback: " << id << endl;
+//}
 
 CINDER_APP_BASIC( SkelsApp, RendererGl )
