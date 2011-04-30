@@ -10,7 +10,6 @@
 
 
 
-#include "common.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/imageio.h"
 #include "cinder/gl/gl.h"
@@ -40,93 +39,19 @@
 #include <stdio.h>
 
 
-#define OSC_SEND_HOST "localhost"
-#define OSC_SEND_PORT 9000
-#define OSC_RECEIVE_PORT 3000
-#define DEBUGMODE true
-#define OBJ_ID_EXIT 99
-#define SOUND_ON 0
-#define FRAMERATE 30
+#define OSC_SEND_HOST		"localhost"
+#define OSC_SEND_PORT		9000
+#define OSC_RECEIVE_PORT	3000
+#define DEBUGMODE			true
+#define OBJ_ID_EXIT			99
+#define SOUND_ON			0
+#define FRAMERATE			30
 
 #define NULLVEC Vec3f(.0f, .0f, .0f)
 
 using namespace ci;
 using namespace ci::app;
 using namespace std;
-
-
-typedef enum {
-	
-	SK_SKEL_HEAD = 0,
-	SK_SKEL_NECK = 1,
-	SK_SKEL_TORSO = 2,
-	SK_SKEL_WAIST = 3,
-	SK_SKEL_L_COLLAR = 4,
-	SK_SKEL_L_SHOULDER = 5,
-	SK_SKEL_L_ELBOW = 6,
-	SK_SKEL_L_WRIST = 7,
-	SK_SKEL_L_HAND = 8,
-	SK_SKEL_L_FINGER = 9,
-	SK_SKEL_R_COLLAR = 10,
-	SK_SKEL_R_SHOULDER = 11,
-	SK_SKEL_R_ELBOW = 12,
-	SK_SKEL_R_WRIST = 13,
-	SK_SKEL_R_HAND = 14,
-	SK_SKEL_R_FINGER = 15,
-	SK_SKEL_L_HIP = 16,
-	SK_SKEL_L_KNEE = 17,
-	SK_SKEL_L_ANKLE = 18,
-	SK_SKEL_L_FOOT = 19,
-	SK_SKEL_R_HIP = 20,
-	SK_SKEL_R_KNEE = 21,
-	SK_SKEL_R_ANKLE = 22,
-	SK_SKEL_R_FOOT = 23,
-	
-} jointIndex;
- 
-
-typedef enum {
-	
-	SK_MODE_COLLECT = 0,
-	SK_MODE_CATCH = 1,
-	SK_MODE_MATCH = 2
-	
-} GameMode;
-
-string dec3(float f)
-{
-	stringstream ss;
-	
-	ss << (math<float>::floor(f * 1000.0f) / 1000.0f);
-	
-	string s = ss.str();
-	
-	while(strlen(s.c_str()) < 8)
-	{
-		stringstream ss2;
-		ss2 << " " << s;
-		s = ss2.str();
-	}
-	
-	return s;
-}
-
-string str(Vec3f v, string prefix = "", string spacer = "")
-{
-	stringstream ss;
-	ss << prefix << spacer << dec3(v.x) << "\t\t" << dec3(v.y) << "\t\t\t\t" << dec3(v.z);
-	return ss.str();
-}
-
-enum AppState
-{
-	SK_DETECTING,
-	SK_TRACKING,
-	SK_KEYBOARD,
-	SK_SHUTDOWN,
-    SK_INTRO,
-	SK_OUTRO
-};
 
 class SkelsApp : public AppBasic 
 {
@@ -243,6 +168,7 @@ public:	// Members
 	
 	bool game_running;
 	bool audio_running;
+	bool intro_playing;
 	
 	bool debug_extra;
 	
@@ -329,7 +255,7 @@ void SkelsApp::initParams()
 	mParam_zWindowCenter =			1000.0f;
 	mParam_zMax =					2000.0f;
 	
-	mParam_collectDistance =		200.0f;
+	mParam_collectDistance =		300.0f;
 	mParam_catchDistance =			800.0f;
 	mParam_matchDistance =			800.0f;
 	
@@ -337,7 +263,7 @@ void SkelsApp::initParams()
 	mParam_velThreshold =			30.0f;
     
     mParam_nearClip =               0.0f;
-    mParam_farClip =                1000.0f;
+    mParam_farClip =                5000.0f;
     
     mParam_armYMoveThresh =         -10.0f;
 	
@@ -384,11 +310,11 @@ void SkelsApp::initParams()
     
     
 	helvetica12 = Font("Menlo", 16) ;
-	helvetica = Font("Helvetica", 24) ;
-    helvetica32 = Font("Helvetica", 32) ;
-    helveticaB = Font("Helvetica Bold", 24) ;
-    helveticaB32 = Font("Helvetica Bold", 32) ;
-	helvetica48 = Font("Helvetica Bold", 48) ;
+	helvetica = Font("DTLProkyonTCapsMedium", 24) ;
+    helvetica32 = Font("DTLProkyonTCapsMedium", 32) ;
+    helveticaB = Font("DTLProkyonTCapsMedium", 24) ;
+    helveticaB32 = Font("DTLProkyonTCapsMedium", 32) ;
+	helvetica48 = Font("DTLProkyonTCapsMedium", 48) ;
 	
 	
 	jointVecNames[0] = "SKEL___HEAD";
@@ -456,8 +382,9 @@ void SkelsApp::initGame(GameMode md)
 	gameState.player = &center;
     gameState.visualsMap = &visualsMap;
     gameState.objectsMap = &objectsMap;
-    gameState.matchRegistered = false;
+    gameState.matchRegistered = -1;
 	gameState.objVisMap = &objVisMap;
+	gameState.intro_playing = &intro_playing;
     
     xmlWorld = XmlTree( loadResource(RES_WORLD) );
     
@@ -653,19 +580,20 @@ void SkelsApp::setup()
 	
 	// set default vals
 	// --------------------------------------------------------------------------
-	debug_extra = true;
-    setting_useKinect = true;
-    setting_picsMode = 0;
-	kb_facing = Vec3f(.0f, .0f, -500.0f);
-    massCenter = NULLVEC;
-	headrot = NULLVEC;
+	debug_extra =			false;
+    setting_useKinect =		true;
+    setting_picsMode =		0;
+	kb_facing =				Vec3f(.0f, .0f, -500.0f);
+    massCenter =			NULLVEC;
+	headrot =				NULLVEC;
     confidenceLH = confidenceRH = confidenceCenter = .0f;
-	drawJoint = 0;
-	center.soundActive = true;
-	fheadrot = .0f;
+	drawJoint =				0;
+	center.soundActive =	true;
+	fheadrot =				.0f;
 	
-	setting_gameMode = SK_MODE_COLLECT;
-	audio_running = false;
+	setting_gameMode =		SK_MODE_COLLECT;
+	audio_running =			false;
+	intro_playing =			false;
 	
     processCommandLineArguments();
 	
@@ -710,6 +638,7 @@ void SkelsApp::enterState(AppState s)
 	{
 	case SK_DETECTING:
 		global_debug = "waiting for user"; 
+			oscManager->send("/skels/event/detectingplayer", 1.0f);
 		break;
 	case SK_KEYBOARD:
 		
@@ -798,8 +727,6 @@ void SkelsApp::update()
 			{
 				
 				V::OpenNIBone &bone = *(*boneIt);
-				
-				//console() << idx << " pos cnf " << bone.positionConfidence << " ori cnf " << bone.orientationConfidence << endl;
 
 				XnPoint3D point;
 				XnPoint3D realJointPos;
@@ -807,9 +734,6 @@ void SkelsApp::update()
 				realJointPos.Y = bone.position[1];
 				realJointPos.Z = bone.position[2];
 				depth->ConvertRealWorldToProjective( 1, &realJointPos, &point );
-				
-				
-			//	console() << "point " << point.X << "/" << point.Y << "/" << point.Z << endl;
 
 				Vec3f pos = Vec3f( WIDTH/2 + (point.X - KINECT_DEPTH_WIDTH/2) * mParam_scaleX, 
 								  HEIGHT/2 + (point.Y - KINECT_DEPTH_HEIGHT/2) * mParam_scaleY, 
@@ -818,27 +742,17 @@ void SkelsApp::update()
 				jointVecs[idx] = pos;
 				
 				
-				
-				// 0 head
-				// 11, 5 shoulders
-				// 4 center
-				// 8, 14 hands
-				
 				if(idx == SK_SKEL_HEAD)
 				{
 					headrot = Vec3f(bone.orientation[0], bone.orientation[1], bone.orientation[2]);
-					
-//					for(int n = 0; n < 9; n++)
-//						console() << bone.orientation[n] << ", ";
-//					console() << endl;
 				}
-				if(idx == SK_SKEL_WAIST) 
+				else if(idx == SK_SKEL_WAIST) 
 				{
 					massCenter = pos - windowCenter;
 					confidenceCenter = bone.positionConfidence;
 					
 				}
-				if(idx == SK_SKEL_L_HAND) 
+				else if(idx == SK_SKEL_L_HAND) 
 				{
 					// adjust the z bias of arms to body depending on how much we are facing fwd or back. if back, take the double to account for the nonlinear distance estimation
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
@@ -846,7 +760,7 @@ void SkelsApp::update()
 					confidenceLH = bone.positionConfidence;
 					
 				}
-				if(idx == SK_SKEL_R_HAND)
+				else if(idx == SK_SKEL_R_HAND)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRightHand = val -windowCenter - massCenter;
@@ -856,20 +770,20 @@ void SkelsApp::update()
 					ly = pos.y;
 					lz = pos.z;
 				}
-				if(idx == SK_SKEL_L_SHOULDER)
+				else if(idx == SK_SKEL_L_SHOULDER)
 				{
 					leftShoulder = pos;
 				}
-				if(idx == SK_SKEL_R_SHOULDER)
+				else if(idx == SK_SKEL_R_SHOULDER)
 				{
 					rightShoulder = pos;
 				}
-				if(idx == SK_SKEL_L_ELBOW)
+				else if(idx == SK_SKEL_L_ELBOW)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffLElbow = val - windowCenter - massCenter;
 				}
-				if(idx == SK_SKEL_R_ELBOW)
+				else if(idx == SK_SKEL_R_ELBOW)
 				{
 					Vec3f val = pos + Vec3f(.0f, .0f, shoulders_norm.z * mParam_zArmAdjust * (shoulders_norm.z > 0 ? (1.0f+shoulders_norm.z) : 1.0f));
 					diffRElbow = val - windowCenter - massCenter;
@@ -911,7 +825,8 @@ void SkelsApp::update()
 	
 	
 	// GESTURE: start game
-	if(state == SK_TRACKING && !game_running && (diffRightHand.y > mParam_armYMoveThresh || diffLeftHand.y > mParam_armYMoveThresh))
+	if(state == SK_TRACKING && !game_running && !intro_playing && 
+	   (diffRightHand.y > mParam_armYMoveThresh || diffLeftHand.y > mParam_armYMoveThresh))
 		startGame();
 
 	if(state == SK_TRACKING)
@@ -1062,9 +977,9 @@ void SkelsApp::update()
 				}
 				else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance)
 				{
-					if(gameState.matchRegistered || state == SK_KEYBOARD)
+					if(gameState.matchRegistered == op.obj->objID || state == SK_KEYBOARD)
 					{
-						gameState.matchRegistered = 0;
+						gameState.matchRegistered = -1;
 						oscManager->send("/skels/event/collect", op.obj->objID);
 						events->event(op.obj->name, "EVENT_COLLECT");
 						
@@ -1080,7 +995,7 @@ void SkelsApp::update()
 				// expiration
 				if(op.obj->isExpired())
 				{
-					oscManager->send("/skels/event/expire", op.obj->objID);
+					//oscManager->send("/skels/event/expire", op.obj->objID);
 					
 					events->event(op.obj->name, "EVENT_EXPIRE");
 				}
@@ -1130,14 +1045,14 @@ void SkelsApp::renderPlayer()
 	gl::drawLine(joints[SK_SKEL_NECK], joints[SK_SKEL_TORSO]);
 	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_TORSO]);
 	
-	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_L_HIP]);
-	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_R_HIP]);
+//	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_L_HIP]);
+//	gl::drawLine(joints[SK_SKEL_WAIST], joints[SK_SKEL_R_HIP]);
 	
-	gl::drawLine(joints[SK_SKEL_L_HIP], joints[SK_SKEL_L_KNEE]);
-	gl::drawLine(joints[SK_SKEL_R_HIP], joints[SK_SKEL_R_KNEE]);
+//	gl::drawLine(joints[SK_SKEL_L_HIP], joints[SK_SKEL_L_KNEE]);
+//	gl::drawLine(joints[SK_SKEL_R_HIP], joints[SK_SKEL_R_KNEE]);
 	
-	gl::drawLine(joints[SK_SKEL_L_KNEE], joints[SK_SKEL_L_FOOT]);
-	gl::drawLine(joints[SK_SKEL_R_KNEE], joints[SK_SKEL_R_FOOT]);
+//	gl::drawLine(joints[SK_SKEL_L_KNEE], joints[SK_SKEL_L_FOOT]);
+//	gl::drawLine(joints[SK_SKEL_R_KNEE], joints[SK_SKEL_R_FOOT]);
 	
 	vector<Vec3f>::iterator it;
 	int idx = 0;
@@ -1158,11 +1073,11 @@ void SkelsApp::renderPlayer()
 				gl::drawSphere(v, 20.0f, 32);
 				break;
 			
-			case SK_SKEL_L_FOOT:
-			case SK_SKEL_R_FOOT:
-				gl::color(bodyCol);
-				gl::drawSphere(v, 20.0f, 16);
-				break;
+//			case SK_SKEL_L_FOOT:
+//			case SK_SKEL_R_FOOT:
+//				gl::color(bodyCol);
+//				gl::drawSphere(v, 20.0f, 16);
+//				break;
 				
 		}
 	}
@@ -1312,71 +1227,26 @@ void SkelsApp::draw()
 	// ---------------------------------------------------------------------------
 	if(state != SK_TRACKING && state != SK_KEYBOARD)
     {
+		ColorA ca(1.0f, 1.0f, 1.0f, math<float>::sin(getElapsedSeconds() * 2.0f) / 2.0f + 0.5f);
+		
         if(state == SK_INTRO)
         {
-            
-            TextLayout tl;
-            tl.setFont(helveticaB32);
-            tl.setColor(Color(1.0f, 1.0f, 1.0f));
-            tl.setLeadingOffset(45.0f);
-            tl.addLine("intro");
-            gl::draw(gl::Texture(tl.render()), Vec2f(WIDTH/6, HEIGHT/4));
+            gl::drawString("NOT A DANCE", Vec2f(WIDTH/6, HEIGHT/4), ca, helveticaB32);
         }
 		else if(state == SK_OUTRO)
 		{
 			stringstream ss;
-			ss << "total time: " << score;
+			ss << "time: " << score << " seconds";
 			
-			gl::drawStringCentered(ss.str(), Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+			gl::drawString(ss.str(), Vec2f(WIDTH/6, HEIGHT/4), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helveticaB32);
 		}
 		
         else
         {
-            gl::drawStringCentered(global_debug, Vec2f(WIDTH/2, HEIGHT/2), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helvetica48);
+            gl::drawString(global_debug, Vec2f(WIDTH/6, HEIGHT/4), ca, helveticaB32);
         }
     }
 	
-}
-
-void SkelsApp::startAudio()
-{
-	console() << "starting audio" << endl;
-	
-	oscManager->send("/skels/start", 1.0f);
-
-	audio_running = true;
-	
-}
-
-void SkelsApp::startGame()
-{
-	console() << "starting game" << endl;
-	
-	oscManager->send("/skels/startGame", 1.0f);
-	
-	center.setActive(true);
-	
-	vector<ObjPtr>::iterator obit;
-	for(obit = world.things.begin(); obit != world.things.end(); obit++)
-	{
-		ObjPtr obj = *obit;
-		
-		obj->setActive(true);
-		if(obj->soundActive)
-			oscManager->send("/skels/event/objon", obj->objID, 1);
-	}
-	
-	game_running = true;
-}
-
-void SkelsApp::pauseGame()
-{
-	game_running = false;
-}
-
-void SkelsApp::resumeGame()
-{
-	game_running = true;
 }
 
 void SkelsApp::keyDown( KeyEvent event )
@@ -1395,6 +1265,7 @@ void SkelsApp::keyDown( KeyEvent event )
         if(state == SK_INTRO)
         {
             enterState(SK_DETECTING);
+			startAudio();
 			printFullState();
         }
         else if(state == SK_KEYBOARD)
@@ -1511,15 +1382,57 @@ void SkelsApp::foundPlayer()
 {
 	
 	console() << "found player" << endl;
+	oscManager->send("/skels/event/playerfound", 1.0f);
+	oscManager->send("/skels/event/detectingplayer", 0.0f);
 	enterState(SK_TRACKING);
 	
-	if(!audio_running)
+	if(!game_running)
 	{
-		startAudio();
 		playIntro(setting_gameMode);
 	}
 	
 	printFullState();
+}
+
+void SkelsApp::startAudio()
+{
+	console() << "starting audio" << endl;
+	
+	oscManager->send("/skels/start", 1.0f);
+	
+	audio_running = true;
+	
+}
+
+void SkelsApp::startGame()
+{
+	console() << "starting game" << endl;
+	
+	oscManager->send("/skels/startgame", 1.0f);
+	
+	center.setActive(true);
+	
+	vector<ObjPtr>::iterator obit;
+	for(obit = world.things.begin(); obit != world.things.end(); obit++)
+	{
+		ObjPtr obj = *obit;
+		
+		obj->setActive(true);
+		if(obj->soundActive)
+			oscManager->send("/skels/event/objon", obj->objID, 1);
+	}
+	
+	game_running = true;
+}
+
+void SkelsApp::pauseGame()
+{
+	game_running = false;
+}
+
+void SkelsApp::resumeGame()
+{
+	game_running = true;
 }
 
 void SkelsApp::playIntro(GameMode gm)
@@ -1527,6 +1440,8 @@ void SkelsApp::playIntro(GameMode gm)
 	console() << "playing intro ..." << endl;
 	//oscManager->send("/skels/event/playIntro", (int) gm);
 	oscManager->send("/skels/gamemode", gm);
+	
+	intro_playing = true;
 	
 	printFullState();
 }
@@ -1590,6 +1505,7 @@ void SkelsApp::endGame()
 	
 	score = getGameTime();
 	game_running = false;
+	setting_gameMode = SK_MODE_COLLECT;
 }
 
 void SkelsApp::resetGame()

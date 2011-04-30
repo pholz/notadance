@@ -157,9 +157,15 @@ public:
 				cout << "OSC: " << addr << endl;
 				if(addr.find("match") != string::npos)
 				{
+					int idMatched = message.getArgAsInt32(0);
+					cout << "match registered: " << idMatched << endl;
+					gs->matchRegistered = idMatched;
+				}
+				else if(addr.find("intro_done") != string::npos)
+				{
 					
-					gs->matchRegistered = true;
-					
+					*(gs->intro_playing) = false;
+					cout << "intro done" << endl;
 				}
 			}
 			else

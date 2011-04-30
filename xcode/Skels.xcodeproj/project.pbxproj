@@ -36,6 +36,7 @@
 		66674DA213048564004CFE8F /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66674D9E13048564004CFE8F /* OscSender.cpp */; };
 		666BD8C3133124EF004F29F5 /* configIR.xml in Resources */ = {isa = PBXBuildFile; fileRef = 666BD8C2133124EF004F29F5 /* configIR.xml */; };
 		666BD8DC13317873004F29F5 /* world.xml in Resources */ = {isa = PBXBuildFile; fileRef = 666BD8DB13317873004F29F5 /* world.xml */; };
+		66715D00136C66500030E6BF /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66715CFF136C66500030E6BF /* common.cpp */; };
 		667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */; };
 		6699B9A413283F4300B259FF /* Events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6699B9A313283F4300B259FF /* Events.cpp */; };
 		66E2ED72133E8D2F00102B6D /* expire_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 66E2ED71133E8D2F00102B6D /* expire_frag.glsl */; };
@@ -158,6 +159,7 @@
 		666BD8C2133124EF004F29F5 /* configIR.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = configIR.xml; path = ../data/configIR.xml; sourceTree = "<group>"; };
 		666BD8DA13312737004F29F5 /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
 		666BD8DB13317873004F29F5 /* world.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = world.xml; path = ../resources/world.xml; sourceTree = "<group>"; };
+		66715CFF136C66500030E6BF /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = common.cpp; path = ../src/common.cpp; sourceTree = "<group>"; };
 		667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Visuals.cpp; path = ../src/Visuals.cpp; sourceTree = "<group>"; };
 		6699B9A213283AF500B259FF /* Events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Events.h; path = ../include/Events.h; sourceTree = SOURCE_ROOT; };
 		6699B9A313283F4300B259FF /* Events.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Events.cpp; path = ../src/Events.cpp; sourceTree = SOURCE_ROOT; };
@@ -216,6 +218,7 @@
 				667DE5C4132ECE8500D2B3C3 /* Visuals.cpp */,
 				66580570133412630022435A /* Sounds.cpp */,
 				66F3ABBC1340FEEE005CAE12 /* FlickrGen.cpp */,
+				66715CFF136C66500030E6BF /* common.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -602,6 +605,7 @@
 				667DE5C6132ECE8500D2B3C3 /* Visuals.cpp in Sources */,
 				66580572133412630022435A /* Sounds.cpp in Sources */,
 				66F3ABBD1340FEEE005CAE12 /* FlickrGen.cpp in Sources */,
+				66715D00136C66500030E6BF /* common.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
