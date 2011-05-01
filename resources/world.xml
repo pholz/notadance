@@ -195,6 +195,30 @@
         <active>0</active>
 		<type>3</type>
 		<mode>2</mode>
+    </object>
+	
+	<object>
+        <id>23</id>
+        <name>item23</name>
+        <pos>
+            <x>0</x>
+            <z>200</z>
+        </pos>
+        <active>0</active>
+		<type>3</type>
+		<mode>2</mode>
+    </object>
+	
+	<object>
+        <id>24</id>
+        <name>item24</name>
+        <pos>
+            <x>800</x>
+            <z>1300</z>
+        </pos>
+        <active>0</active>
+		<type>3</type>
+		<mode>2</mode>
 		<final>1</final>
     </object>
 	
@@ -755,10 +779,12 @@
         <type>EVENT_COLLECT</type>
         
         <nextobjects>
+			<objectname>item23</objectname>
         </nextobjects>
         
         <nextvisuals>
             <visualsname>vis_collect_i22</visualsname>
+			<visualsname>vis_item23</visualsname>
         </nextvisuals>
         
         <deactivateobjects>
@@ -767,6 +793,52 @@
         
         <deactivatevisuals>
 			<visualsname>vis_item22</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item23</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+			<objectname>item24</objectname>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i23</visualsname>
+			<visualsname>vis_item24</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item23</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item23</visualsname>
+        </deactivatevisuals>
+        
+    </event>
+	
+	<event>
+        
+        <objectname>item24</objectname>
+        <type>EVENT_COLLECT</type>
+        
+        <nextobjects>
+        </nextobjects>
+        
+        <nextvisuals>
+            <visualsname>vis_collect_i24</visualsname>
+        </nextvisuals>
+        
+        <deactivateobjects>
+            <objectname>item24</objectname>
+        </deactivateobjects>
+        
+        <deactivatevisuals>
+			<visualsname>vis_item24</visualsname>
         </deactivatevisuals>
         
     </event>

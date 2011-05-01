@@ -222,6 +222,7 @@ public:	// Members
     bool setting_useKinect;
     int setting_picsMode;
 	GameMode setting_gameMode;
+	bool setting_fullScreen;
     
     map< string, vector<gl::Texture> > texturesMap;
     map< string, vector<Surface> > surfacesMap;
@@ -232,12 +233,27 @@ public:	// Members
 	// SCORE AND TIME
 	float gameTime;
 	float score;
+	
+	// misc timing
+	float timer_outro;
 
 };
 
 void SkelsApp::prepareSettings(Settings* settings)
 {
-	settings->setWindowSize(WIDTH, HEIGHT);
+	
+	setting_useKinect =		true;
+    setting_picsMode =		1;
+	setting_gameMode =		SK_MODE_COLLECT;
+	setting_fullScreen =	false;
+	
+	processCommandLineArguments();
+	
+	if(setting_fullScreen)
+		settings->setFullScreen(true);
+	else
+		settings->setWindowSize(WIDTH, HEIGHT);
+	
 }
 
 void SkelsApp::initParams()
@@ -502,6 +518,12 @@ void SkelsApp::initGame(GameMode md)
 	v.reset(new VisualsItem1(20, "vis_item22"));
 	visualsMap[v->name] = v;
 	
+	v.reset(new VisualsItem1(21, "vis_item23"));
+	visualsMap[v->name] = v;
+	
+	v.reset(new VisualsItem1(22, "vis_item24"));
+	visualsMap[v->name] = v;
+	
     v.reset(new VisualsBump(2, "vis_bump"));
     visualsMap[v->name] = v;
     
@@ -536,6 +558,8 @@ void SkelsApp::initGame(GameMode md)
 	
 	objVisMap["item21"] = "vis_item21";
 	objVisMap["item22"] = "vis_item22";
+	objVisMap["item23"] = "vis_item23";
+	objVisMap["item24"] = "vis_item24";
 	
 	
 	bDebugMode = DEBUGMODE;
@@ -559,8 +583,8 @@ void SkelsApp::processCommandLineArguments()
         if(!argsIt->compare("NOKINECT"))
             setting_useKinect = false;
         
-        if(!argsIt->compare("USERPICS"))
-            setting_picsMode = 1;
+//        if(!argsIt->compare("USERPICS"))
+//            setting_picsMode = 1;
 		
 		int pos = 0;
 		if( (pos = argsIt->find("GAMEMODE")) != string::npos)
@@ -568,6 +592,9 @@ void SkelsApp::processCommandLineArguments()
 			int md = (*argsIt)[pos+9] - '0';
 			setting_gameMode = (GameMode)md;
 		}
+		
+		if(!argsIt->compare("FULLSCREEN"))
+            setting_fullScreen = true;
 		
     }
 }
@@ -581,8 +608,6 @@ void SkelsApp::setup()
 	// set default vals
 	// --------------------------------------------------------------------------
 	debug_extra =			false;
-    setting_useKinect =		true;
-    setting_picsMode =		0;
 	kb_facing =				Vec3f(.0f, .0f, -500.0f);
     massCenter =			NULLVEC;
 	headrot =				NULLVEC;
@@ -590,12 +615,10 @@ void SkelsApp::setup()
 	drawJoint =				0;
 	center.soundActive =	true;
 	fheadrot =				.0f;
-	
-	setting_gameMode =		SK_MODE_COLLECT;
+
 	audio_running =			false;
 	intro_playing =			false;
-	
-    processCommandLineArguments();
+    
 	
 	initOpenNI();
 	
@@ -617,6 +640,7 @@ void SkelsApp::setup()
 	initGame(setting_gameMode);
 	
 	gameTime = .0f;
+	timer_outro = .0f;
     enterState(SK_INTRO);
     
     // FMOD only
@@ -1238,7 +1262,11 @@ void SkelsApp::draw()
 			stringstream ss;
 			ss << "time: " << score << " seconds";
 			
-			gl::drawString(ss.str(), Vec2f(WIDTH/6, HEIGHT/4), ColorA(1.0f, 1.0f, 1.0f, 1.0f), helveticaB32);
+			if(timer_outro < 1.0f)
+				timer_outro += (1.0f/30.0f);
+			
+			gl::drawString("THE END", Vec2f(WIDTH/6, HEIGHT/4-50), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helvetica48);
+			gl::drawString(ss.str(), Vec2f(WIDTH/6, HEIGHT/4), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB32);
 		}
 		
         else
@@ -1512,11 +1540,6 @@ void SkelsApp::resetGame()
 {
 	console() << "resetting game..." << endl;
 	gameTime = .0f;
-	//changeGameMode(SK_MODE_COLLECT);
-
-	changeGameMode(SK_MODE_COLLECT);
-
-	enterState(SK_DETECTING);
 }
 
 void SkelsApp::shutdown()
