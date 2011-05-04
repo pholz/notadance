@@ -29,6 +29,8 @@ typedef struct
 	
 	int						matchRegistered;
 	float					lastMatchActive;
+	bool					insideMatchArea;
+	float					timeSinceLastCollect;
 	bool					*intro_playing;
 } GameState;
 

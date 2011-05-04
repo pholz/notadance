@@ -91,6 +91,26 @@ void Events::event(string name, string type)
         Actions a = conditionsActions[Conditions(name, type)];
 
         vector<string>::iterator it;
+		
+		
+		for (it=a.deactivateObj.begin(); it != a.deactivateObj.end(); it++) 
+        {
+            if(gameState->objectsMap->find(*it) == gameState->objectsMap->end())
+                continue;
+            
+            ObjPtr o = (*(gameState->objectsMap))[*it];
+            (*(gameState->objectsMap))[*it]->setSoundActive(false);
+            oscManager->send("/skels/event/objon", o->objID, 0);
+        }
+		
+		for (it=a.deactivateVisuals.begin(); it != a.deactivateVisuals.end(); it++) 
+        {
+            if(gameState->visualsMap->find(*it) == gameState->visualsMap->end())
+                continue;
+            
+            (*(gameState->visualsMap))[*it]->setActive(false);
+        }
+		
         for (it=a.nextObj.begin(); it != a.nextObj.end(); it++) 
         {
             if(gameState->objectsMap->find(*it) == gameState->objectsMap->end())
@@ -109,23 +129,11 @@ void Events::event(string name, string type)
             (*(gameState->visualsMap))[*it]->setActive(true);
         }
         
-        for (it=a.deactivateObj.begin(); it != a.deactivateObj.end(); it++) 
-        {
-            if(gameState->objectsMap->find(*it) == gameState->objectsMap->end())
-                continue;
-            
-            ObjPtr o = (*(gameState->objectsMap))[*it];
-            (*(gameState->objectsMap))[*it]->setSoundActive(false);
-            oscManager->send("/skels/event/objon", o->objID, 0);
-        }
         
-        for (it=a.deactivateVisuals.begin(); it != a.deactivateVisuals.end(); it++) 
-        {
-            if(gameState->visualsMap->find(*it) == gameState->visualsMap->end())
-                continue;
-            
-            (*(gameState->visualsMap))[*it]->setActive(false);
-        }
+        if(!type.compare("EVENT_COLLECT"))
+		{
+			gameState->timeSinceLastCollect = .0f;
+		}
         
     }
 }

@@ -1,17 +1,36 @@
+#0
 welcome to the game! 
 there are sounds scattered in space. collect all the sounds. walk up to a sound to collect it.
 
 start the game by raising your hand once.
 
+#1
 there are more sounds. they are now moving around you. collect all the sounds. get close to a sound and catch it by lifting your arm.
 
 continue the game now by raising your hand once.
 
+###
 there are more sounds. they are now composed of two tones each. you can produce similar tones by moving your arms.
 collect all the sounds. to collect a sound, get close to it and use your arms to match your tones with the sound.
 
 continue the game now by raising your hand once.
+###
 
+#2
+there are more sounds. they are now playing notes. move your arms around - they can now generate sounds.
+
+to collect a sound, get close to it and move one of your arms so that the sound it makes matches the note of the sound you want to collect.
+
+continue the game now by raising your hand once.
+
+
+#2 - event
+you're close now. match the sound!
+
+#2b
+the sounds to collect are now playing two notes. use both of your arms at the same time to match the notes.
+
+# outro
 you have completed the game. the audience knows your score. thank you for playing.
 
 

@@ -193,6 +193,7 @@ public:	// Members
     float mParam_armYMoveThresh;
 	float mParam_walkXScale, mParam_walkZScale;
 	float mParam_ONISkeletonSmoothing;
+	float mParam_repeatInstructionsThresh;
 	
 	float mParam_boundsX, mParam_boundsZ;
 	
@@ -291,6 +292,8 @@ void SkelsApp::initParams()
 	
 	mParam_ONISkeletonSmoothing =	0.2f;
 	
+	mParam_repeatInstructionsThresh	= 20.0f;
+	
 	
 	mParams = params::InterfaceGl( "App parameters", Vec2i( 200, 400 ) );
 	mParams.addParam( "scalex",				&mParam_scaleX,		"min=-10.0 max=10.0 step=.01 keyIncr=X keyDecr=x" );
@@ -323,6 +326,8 @@ void SkelsApp::initParams()
 	mParams.addParam( "boundsZ",     &mParam_boundsZ, "min=500 max=4000 step=10" );
 	
 	mParams.addParam( "SkeletonSmooth", &mParam_ONISkeletonSmoothing, "min=0.0 max=5.0 step=0.05");
+	
+	mParams.addParam("RepeatInstructionsThresh", &mParam_repeatInstructionsThresh, "min=10.0 max=60.0 step=1.0");
     
     
 	helvetica12 = Font("Menlo", 16) ;
@@ -689,6 +694,20 @@ void SkelsApp::update()
 		gameState.lastMatchActive -= dt;
 	else if(gameState.lastMatchActive < .0f)
 		gameState.lastMatchActive = .0f;
+	
+	if(game_running)
+	{
+		gameState.timeSinceLastCollect += dt;
+		
+		if(gameState.timeSinceLastCollect > mParam_repeatInstructionsThresh)
+		{
+			gameState.timeSinceLastCollect = .0f;
+			
+			// in match mode, it's maybe not a good idea to repeat the instructions
+			if(setting_gameMode != SK_MODE_MATCH)
+				oscManager->send("/skels/event/repeatInstructions", setting_gameMode);
+		}
+	}
 
 	
     if(state == SK_INTRO)
@@ -1004,20 +1023,35 @@ void SkelsApp::update()
 					
 					
 				}
-				else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance && gameState.lastMatchActive > .0f)
+				else if(op.obj->mode == SK_MODE_MATCH)
 				{
-					if(gameState.matchRegistered == op.obj->objID || state == SK_KEYBOARD)
+					
+					if(op.distance < mParam_matchDistance)		
 					{
-						gameState.matchRegistered = -1;
-						oscManager->send("/skels/event/collect", op.obj->objID);
-						events->event(op.obj->name, "EVENT_COLLECT");
-						
-						if(op.obj->final)
+						if( !gameState.insideMatchArea )
 						{
-							console() << "completed mode 2 at time: " << getGameTime() << endl;
-							
-							endGame();
+							gameState.insideMatchArea = true;
+							oscManager->send("/skels/event/insideMatchArea", 1.0f);
 						}
+						
+						if( (gameState.lastMatchActive > .0f && gameState.matchRegistered == op.obj->objID) || state == SK_KEYBOARD)
+						{
+							gameState.matchRegistered = -1;
+							oscManager->send("/skels/event/collect", op.obj->objID);
+							events->event(op.obj->name, "EVENT_COLLECT");
+							
+							if(op.obj->final)
+							{
+								console() << "completed mode 2 at time: " << getGameTime() << endl;
+								
+								endGame();
+							}
+						}
+					}
+					else
+					{
+						if( gameState.insideMatchArea )
+							gameState.insideMatchArea = false;
 					}
 				}
 				
@@ -1456,6 +1490,7 @@ void SkelsApp::startGame()
 	}
 	
 	game_running = true;
+	gameState.timeSinceLastCollect = .0f;
 }
 
 void SkelsApp::pauseGame()
