@@ -92,7 +92,7 @@ public:
 	void resetOpenNI();
 	
 	void processCommandLineArguments();
-	void changeGameMode(GameMode gm);
+	void changeGameMode(GameMode gm, bool intro = true);
 	
 	void foundPlayer();
 	void playIntro(GameMode gm);
@@ -279,7 +279,7 @@ void SkelsApp::initParams()
 	mParam_velThreshold =			30.0f;
     
     mParam_nearClip =               0.0f;
-    mParam_farClip =                5000.0f;
+    mParam_farClip =                3500.0f;
     
     mParam_armYMoveThresh =         -10.0f;
 	
@@ -684,6 +684,11 @@ void SkelsApp::update()
 	float now = getElapsedSeconds();
 	float dt = now - lastUpdate;
 	lastUpdate = now;
+	
+	if(gameState.lastMatchActive > .0f)
+		gameState.lastMatchActive -= dt;
+	else if(gameState.lastMatchActive < .0f)
+		gameState.lastMatchActive = .0f;
 
 	
     if(state == SK_INTRO)
@@ -999,7 +1004,7 @@ void SkelsApp::update()
 					
 					
 				}
-				else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance)
+				else if(op.obj->mode == SK_MODE_MATCH && op.distance < mParam_matchDistance && gameState.lastMatchActive > .0f)
 				{
 					if(gameState.matchRegistered == op.obj->objID || state == SK_KEYBOARD)
 					{
@@ -1489,10 +1494,10 @@ void SkelsApp::resetOpenNI()
 	
 	_device0->requestUserCalibration();
 	
-	pauseGame();
+	//pauseGame();
 }
 
-void SkelsApp::changeGameMode(GameMode gm)
+void SkelsApp::changeGameMode(GameMode gm, bool intro)
 {
 	console() << "changing game mode to " << (int)gm << endl;
 	
@@ -1504,7 +1509,8 @@ void SkelsApp::changeGameMode(GameMode gm)
 	
 	initGame(gm);
 	
-	playIntro(setting_gameMode);
+	if(intro)
+		playIntro(setting_gameMode);
 	
 	//startGame();
 }
@@ -1533,7 +1539,8 @@ void SkelsApp::endGame()
 	
 	score = getGameTime();
 	game_running = false;
-	setting_gameMode = SK_MODE_COLLECT;
+	
+	changeGameMode(SK_MODE_COLLECT, false);
 }
 
 void SkelsApp::resetGame()

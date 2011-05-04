@@ -18,6 +18,8 @@
 #define GLOBAL_W 1024
 #define GLOBAL_H 768
 
+#define SK_MATCH_ACTIVE_TIME 1.0f
+
 typedef struct
 {
 	Obj3D                   *player;
@@ -26,6 +28,7 @@ typedef struct
 	map<string, string>		*objVisMap;
 	
 	int						matchRegistered;
+	float					lastMatchActive;
 	bool					*intro_playing;
 } GameState;
 

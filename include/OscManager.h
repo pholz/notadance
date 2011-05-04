@@ -160,6 +160,7 @@ public:
 					int idMatched = message.getArgAsInt32(0);
 					cout << "match registered: " << idMatched << endl;
 					gs->matchRegistered = idMatched;
+					gs->lastMatchActive = SK_MATCH_ACTIVE_TIME;
 				}
 				else if(addr.find("intro_done") != string::npos)
 				{
