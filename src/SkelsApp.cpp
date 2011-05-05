@@ -37,6 +37,8 @@
 #include "FlickrGen.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <fstream>
 
 
 #define OSC_SEND_HOST		"localhost"
@@ -234,6 +236,9 @@ public:	// Members
 	// SCORE AND TIME
 	float gameTime;
 	float score;
+	ImageSourceRef scoreImage;
+	gl::Texture scoreTex;
+	map<float, string> hiscoreMap;
 	
 	// misc timing
 	float timer_outro;
@@ -623,6 +628,8 @@ void SkelsApp::setup()
 
 	audio_running =			false;
 	intro_playing =			false;
+	
+//	scoreImage.reset(0);
     
 	
 	initOpenNI();
@@ -718,7 +725,7 @@ void SkelsApp::update()
 	
 	// Update textures
 	// ---------------------------------------------------------------------------
-    if(setting_useKinect)
+    if(setting_useKinect && debug_extra)
     {
         mColorTex.update( getColorImage() );
         mDepthTex.update( getDepthImage() );	// Histogram
@@ -1306,6 +1313,22 @@ void SkelsApp::draw()
 			
 			gl::drawString("THE END", Vec2f(WIDTH/6, HEIGHT/4-50), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helvetica48);
 			gl::drawString(ss.str(), Vec2f(WIDTH/6, HEIGHT/4), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB32);
+			
+			gl::color(ColorA(1.0f, 1.0f, 1.0f, timer_outro));
+			gl::draw(scoreTex, Vec2f(WIDTH/6, HEIGHT/4 + 50));
+			
+			map<float, string>::iterator hsit;
+			
+			int n = 0;
+			for(hsit = hiscoreMap.begin(); hsit != hiscoreMap.end(); hsit++)
+			{
+				stringstream hs;
+				hs << hsit->second << "\t\t" << hsit->first;
+				
+				gl::drawString(hs.str(), Vec2f(WIDTH/2+50, HEIGHT/4+n*20), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB);
+				
+				n++;
+			}
 		}
 		
         else
@@ -1576,6 +1599,77 @@ void SkelsApp::endGame()
 	game_running = false;
 	
 	changeGameMode(SK_MODE_COLLECT, false);
+	
+	
+	// record score
+	if(setting_useKinect)
+    {
+		time_t rawtime;
+		struct tm * timeinfo;
+		char buffer [80];
+		
+		time ( &rawtime );
+		timeinfo = localtime ( &rawtime );
+		
+		strftime (buffer,80,"%Y-%m-%d-%H-%M-%S",timeinfo);
+		
+		stringstream path, sstime;
+		path << "/Users/holz/io/";
+		path << buffer;
+		path << ".png";
+	
+		sstime << buffer;
+		
+		scoreImage = getColorImage();
+		scoreTex = gl::Texture(scoreImage);
+		
+		writeImage(path.str() , scoreImage);
+    
+		
+		/*
+		ofstream scores_file("/Users/holz/io/scores.txt", ios::out | ios::app);
+		
+		scores_file << sstime.str() << ";" << score << endl;
+		
+		scores_file.close();
+		
+		// load hisc
+		
+		ifstream scores_in("/Users/holz/io/scores.txt");
+		
+		char inbuf[256];
+		scores_in.getLine(inbuf);
+		
+		std::vector<std::string> strs;
+		boost::split(strs, "string to split", boost::is_any_of("\t "));
+		 */
+		
+		XmlTree xmlScores(loadFile("/Users/holz/io/scores.xml"));
+		
+		XmlTree newItem("item", "");
+		XmlTree newTime("time", sstime.str());
+
+		XmlTree newScore;
+		newScore.setTag("score");
+		newScore.setValue<float>(score);
+		
+		newItem.push_back(newTime);
+		newItem.push_back(newScore);
+		
+		xmlScores.push_back(newItem);
+		
+		
+		for(XmlTree::Iter itemit = xmlScores.begin("item"); itemit != xmlScores.end(); itemit++)
+		{
+			string xTime = itemit->getChild("time").getValue();
+			float xScore = itemit->getChild("score").getValue<float>();
+			
+			hiscoreMap[xScore] = xTime;
+		}
+		
+		xmlScores.write( writeFile("/Users/holz/io/scores.xml") );
+        
+    }
 }
 
 void SkelsApp::resetGame()
