@@ -1040,25 +1040,29 @@ void SkelsApp::update()
 							gameState.insideMatchArea = true;
 							oscManager->send("/skels/event/insideMatchArea", 1.0f);
 						}
-						
-						if( (gameState.lastMatchActive > .0f && gameState.matchRegistered == op.obj->objID) || state == SK_KEYBOARD)
-						{
-							gameState.matchRegistered = -1;
-							oscManager->send("/skels/event/collect", op.obj->objID);
-							events->event(op.obj->name, "EVENT_COLLECT");
-							
-							if(op.obj->final)
-							{
-								console() << "completed mode 2 at time: " << getGameTime() << endl;
-								
-								endGame();
-							}
-						}
 					}
 					else
 					{
-						if( gameState.insideMatchArea )
+						if( gameState.insideMatchArea &&  op.distance > 2*mParam_matchDistance)
+						{
 							gameState.insideMatchArea = false;
+							oscManager->send("/skels/event/insideMatchArea", 0.0f);
+						}
+					}
+					
+					if( (gameState.insideMatchArea && gameState.lastMatchActive > .0f && gameState.matchRegistered == op.obj->objID) || state == SK_KEYBOARD)
+					{
+						gameState.matchRegistered = -1;
+						oscManager->send("/skels/event/collect", op.obj->objID);
+						events->event(op.obj->name, "EVENT_COLLECT");
+						gameState.insideMatchArea = false;
+						
+						if(op.obj->final)
+						{
+							console() << "completed mode 2 at time: " << getGameTime() << endl;
+							
+							endGame();
+						}
 					}
 				}
 				

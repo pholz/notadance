@@ -48,11 +48,19 @@ void World::draw()
 		{
 			gl::color(Color(1.0f, 1.0f, 1.0f));
 			
-			float clocksin = math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC);
+			//float clocksin = math<float>::sin((float)clock()/(float)CLOCKS_PER_SEC);
 			
 			//rad += 20.0f * math<float>::abs(clocksin) + 10.0f;
 			
+			float secs = (float)clock()/(float)CLOCKS_PER_SEC;
+			
+			secs *= 1000.0f;
+			
+			
 			gl::drawSphere(obj->pos, rad, 32);
+			
+			gl::color(ColorA(1.0f, 1.0f, 1.0f, 1.0f-float(int(secs) % 500)/500.0f));
+			gl::drawSphere(obj->pos, rad + float(int(secs) % 500)/2.0f, 32);
 			
 			map<string, string> &objVisMap = *(gameState.objVisMap);
 			

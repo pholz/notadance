@@ -53,7 +53,7 @@ void VisualsItem1::init()
 
 void VisualsItem1::draw()
 {
-	gl::color(ColorA(1, 1, 1, .5f));
+	gl::color(ColorA(1, 1, 1, .25f));
     
 	/*
     gl::setMatricesWindowPersp( GLOBAL_W, GLOBAL_H, 60.0f, 1.0f, 1000.0f);
@@ -98,7 +98,7 @@ void VisualsItem1::draw()
 		
 		float startRad = step * i * 4;
 		float endRad = step * (i+3) *4;
-		float scale = 20.0f;
+		float scale = 8.0f;
 		
 		glBegin(GL_TRIANGLE_FAN);
 		

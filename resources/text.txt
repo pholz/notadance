@@ -27,6 +27,8 @@ continue the game now by raising your hand once.
 #2 - event
 you're close now. match the sound!
 
+get closer to the sound!
+
 #2b
 the sounds to collect are now playing two notes. use both of your arms at the same time to match the notes.
 
