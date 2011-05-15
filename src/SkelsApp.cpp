@@ -238,6 +238,7 @@ public:	// Members
 	float score;
 	ImageSourceRef scoreImage;
 	gl::Texture scoreTex;
+	map<float, gl::Texture> scoreTexMap;
 	map<float, string> hiscoreMap;
 	
 	// misc timing
@@ -1319,7 +1320,7 @@ void SkelsApp::draw()
 			gl::drawString(ss.str(), Vec2f(WIDTH/6, HEIGHT/4), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB32);
 			
 			gl::color(ColorA(1.0f, 1.0f, 1.0f, timer_outro));
-			gl::draw(scoreTex, Vec2f(WIDTH/6, HEIGHT/4 + 50));
+			gl::draw(scoreTex, Rectf(Vec2f(WIDTH/6, HEIGHT/4 + 50), Vec2f(WIDTH/6+320, HEIGHT/4 + 50+240)));
 			
 			map<float, string>::iterator hsit;
 			
@@ -1327,9 +1328,11 @@ void SkelsApp::draw()
 			for(hsit = hiscoreMap.begin(); hsit != hiscoreMap.end(); hsit++)
 			{
 				stringstream hs;
-				hs << hsit->second << "\t\t" << hsit->first;
+				hs << hsit->second.substr(0, 10) << "\t\t" << hsit->first;
 				
-				gl::drawString(hs.str(), Vec2f(WIDTH/2+50, HEIGHT/4+n*20), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB);
+				gl::drawString(hs.str(), Vec2f(WIDTH/2+50+130, HEIGHT/4+n*90), ColorA(1.0f, 1.0f, 1.0f, timer_outro), helveticaB);
+				
+				gl::draw(scoreTexMap[hsit->first], Rectf(Vec2f(WIDTH/2+50, HEIGHT/4+n*90), Vec2f(WIDTH/2+50+120, HEIGHT/4+n*90+90)));
 				
 				n++;
 			}
@@ -1668,18 +1671,47 @@ void SkelsApp::endGame()
 		
 		xmlScores.push_back(newItem);
 		
-		
 		for(XmlTree::Iter itemit = xmlScores.begin("item"); itemit != xmlScores.end(); itemit++)
 		{
 			string xTime = itemit->getChild("time").getValue();
 			float xScore = itemit->getChild("score").getValue<float>();
 			
 			hiscoreMap[xScore] = xTime;
+			
+			
 		}
 		
+		
+		
+		
 		xmlScores.write( writeFile("/Users/holz/io/scores.xml") );
+		
+		
+		//////
+		
+		scoreTexMap = map<float, gl::Texture>();
+		
+		map<float, string>::iterator hsit;
+		
+		int n = 0;
+		for(hsit = hiscoreMap.begin(); hsit != hiscoreMap.end(); hsit++)
+		{
+			stringstream hs;
+			hs << "/Users/holz/io/";
+			hs << hsit->second;
+			hs << ".png";
+			
+			scoreTexMap[hsit->first] = gl::Texture( loadImage ( loadFile(hs.str()) ) );
+			
+			n++;
+		}
+		
         
     }
+	
+	
+	
+	
 }
 
 void SkelsApp::resetGame()
