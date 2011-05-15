@@ -15,7 +15,7 @@
         <name>item2</name>
         <pos>
             <x>-900</x>
-            <z>3400</z>
+            <z>2700</z>
         </pos>
         <active>0</active>
 		<type>1</type>
@@ -39,7 +39,7 @@
         <name>item4</name>
         <pos>
             <x>1000</x>
-            <z>4000</z>
+            <z>2000</z>
         </pos>
         <active>0</active>
 		<type>1</type>
@@ -165,7 +165,7 @@
         </pos>
 		<vel>
 			<x>-120</x>
-            <z>-120</z>
+            <z>0</z>
 		</vel>
         <active>0</active>
 		<type>2</type>
@@ -190,7 +190,7 @@
         <name>item22</name>
         <pos>
             <x>-400</x>
-            <z>3300</z>
+            <z>2300</z>
         </pos>
         <active>0</active>
 		<type>3</type>

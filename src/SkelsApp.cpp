@@ -1419,6 +1419,12 @@ void SkelsApp::keyDown( KeyEvent event )
 		endGame();
 	}
 	
+	else if(event.getChar() == 'f')
+	{
+		_device0->enableFileCalibration(!_device0->isFileCalibration());
+		console() << "fileCalibration is now " << (_device0->isFileCalibration() ? " ON " : "OFF ") << endl;
+	}
+	
 	else if(event.getChar() == 't')
 	{
 		enterState(SK_TRACKING);
