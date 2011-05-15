@@ -280,7 +280,7 @@ void SkelsApp::initParams()
 	
 	mParam_collectDistance =		300.0f;
 	mParam_catchDistance =			800.0f;
-	mParam_matchDistance =			800.0f;
+	mParam_matchDistance =			1200.0f;
 	
 	mParam_zArmAdjust =				16.0f;
 	mParam_velThreshold =			30.0f;
